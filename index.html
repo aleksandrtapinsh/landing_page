@@ -5,97 +5,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="/favicon.png" type="image/x-icon">
+  <link rel="stylesheet" href="styles.css">
   <title>Sasha Tapinsh Online</title>
-  <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #0d0d0d;
-      color: #e8e8e8;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-    }
-
-    header {
-      margin-bottom: 3rem;
-      text-align: center;
-    }
-
-    header h1 {
-      font-size: 1.6rem;
-      font-weight: 400;
-      letter-spacing: 0.08em;
-      color: #a0a0a0;
-    }
-
-    header h1 span {
-      color: #e8e8e8;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-      width: min(600px, 90vw);
-      align-items: center;
-    }
-
-    a.card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-      padding: 1.8rem 1rem;
-      border: 1px solid #2a2a2a;
-      border-radius: 10px;
-      background: #161616;
-      text-decoration: none;
-      color: inherit;
-      transition: border-color 0.2s, background 0.2s, transform 0.15s;
-    }
-
-    a.card:hover {
-      border-color: #555;
-      background: #1e1e1e;
-      transform: translateY(-2px);
-    }
-
-    a.card svg,
-    a.card img {
-      width: 32px;
-      height: 32px;
-      opacity: 0.75;
-    }
-
-    a.card span {
-      font-size: 0.95rem;
-      letter-spacing: 0.04em;
-    }
-
-    footer {
-      margin-top: 1.5em;
-      font-size: 0.75rem;
-      color: #3a3a3a;
-    }
-  </style>
 </head>
 
 <body>
   <header>
     <h1><span>sasha</span>-tapinsh.online</h1>
+    <form class="search-bar" action="https://search.brave.com/search" name="q">
+      <input type="text" name="q" pattern=".*\S.*" required>
+      <button class="search-btn" type="submit">
+        <span>Search</span>
+      </button>
+    </form>
   </header>
-
   <main class="grid">
     <a class="card" href="https://showdown.sasha-tapinsh.online" target="_blank" rel="noopener">
       <!-- showdown logo -->
