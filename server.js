@@ -5,6 +5,7 @@ const path = require('path');
 const PORT = process.env.PORT || 8080;
 const ROOT = __dirname;
 const HLS_PLAYLIST = path.join(ROOT, 'hls', 'index.m3u8');
+const HLS_SESSION = path.join(ROOT, 'hls', 'session');
 
 // A stream is "live" if ffmpeg refreshed the playlist recently. Segments are
 // 2s, so anything older than this means the publisher went away.
@@ -28,11 +29,17 @@ const MIME_TYPES = {
 
 const DENIED = ['node_modules', 'scripts', '.git', '.env', 'package.json', 'package-lock.json'];
 
-function isLive() {
+function liveState() {
   try {
-    return Date.now() - fs.statSync(HLS_PLAYLIST).mtimeMs < LIVE_STALE_MS;
+    if (Date.now() - fs.statSync(HLS_PLAYLIST).mtimeMs >= LIVE_STALE_MS) {
+      return { live: false, session: null };
+    }
+    // The session changes on every restart; the player watches it so it can
+    // tear down and rebuild rather than trying to follow a playlist that just
+    // jumped backwards.
+    return { live: true, session: fs.readFileSync(HLS_SESSION, 'utf8').trim() };
   } catch {
-    return false;
+    return { live: false, session: null };
   }
 }
 
@@ -56,7 +63,7 @@ const server = http.createServer((req, res) => {
   }
 
   if (urlPath === '/api/live/status') {
-    sendJson(res, { live: isLive(), playlist: '/hls/index.m3u8' });
+    sendJson(res, { ...liveState(), playlist: '/hls/index.m3u8' });
     return;
   }
 
@@ -81,8 +88,16 @@ const server = http.createServer((req, res) => {
     if (ext === '.m3u8') {
       // The playlist is rewritten every couple of seconds; never cache it.
       headers['Cache-Control'] = 'no-store';
+    } else if (ext === '.html' || ext === '.js' || ext === '.css') {
+      // Small enough that revalidating costs nothing, and it means a deploy
+      // takes effect without anyone having to hard-refresh.
+      headers['Cache-Control'] = 'no-cache';
     } else if (ext === '.ts' || ext === '.m4s') {
-      headers['Cache-Control'] = 'public, max-age=31536000, immutable';
+      // Segment names are unique per broadcast, so these are safe to cache —
+      // but each one is deleted from disk after ~18s and never requested again.
+      // A long lifetime would just pile gigabytes of dead video into the
+      // viewer's browser cache; a minute is plenty to cover a rebuffer.
+      headers['Cache-Control'] = 'public, max-age=60';
     }
     res.writeHead(200, headers);
     res.end(data);

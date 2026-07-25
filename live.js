@@ -13,6 +13,7 @@
 
   let hls = null;
   let attached = false;
+  let session = null;
 
   // Safari (and iOS) plays HLS natively; everywhere else needs hls.js.
   const nativeHls = video.canPlayType('application/vnd.apple.mpegurl') !== '';
@@ -58,9 +59,18 @@
   async function poll() {
     try {
       const res = await fetch('/api/live/status', { cache: 'no-store' });
-      const { live } = await res.json();
-      if (live) attach();
-      else detach();
+      const status = await res.json();
+      if (!status.live) {
+        session = null;
+        detach();
+        return;
+      }
+      // A restart between two polls looks like a live stream that never
+      // stopped, but the playlist underneath has been replaced. Rebuild rather
+      // than let hls.js try to follow a sequence that ran backwards.
+      if (attached && status.session !== session) detach();
+      session = status.session;
+      attach();
     } catch {
       detach();
     }

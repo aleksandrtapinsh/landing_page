@@ -24,6 +24,9 @@ const RTMP_PORT = Number(process.env.RTMP_PORT) || 1935;
 const FLV_PORT = Number(process.env.FLV_PORT) || 8000;
 const APP_NAME = 'live';
 const HLS_DIR = path.join(__dirname, 'hls');
+// Identifies the current broadcast so the player can tell a restart apart from
+// an ongoing stream. Lives inside HLS_DIR so it is cleared along with it.
+const SESSION_FILE = path.join(HLS_DIR, 'session');
 
 if (!STREAM_KEY) {
   console.error('STREAM_KEY is not set. Run `npm run stream:key` to generate one.');
@@ -89,6 +92,14 @@ function startPackaging(streamPath) {
   purgeHlsDir();
   fs.mkdirSync(HLS_DIR, { recursive: true });
 
+  // Segment numbering restarts at zero on every publish, so a fixed name like
+  // seg_00000.ts refers to different video each time you go live. Segments are
+  // served with a long immutable cache, so browsers would replay the *previous*
+  // stream out of cache before cutting to the new one. Tagging each session
+  // makes every segment URL unique and the caching correct.
+  const session = crypto.randomBytes(6).toString('hex');
+  fs.writeFileSync(SESSION_FILE, session);
+
   const args = [
     '-hide_banner',
     '-nostdin',
@@ -109,7 +120,7 @@ function startPackaging(streamPath) {
     '-hls_delete_threshold', '3',
     '-hls_flags', 'delete_segments+independent_segments+temp_file',
     '-hls_segment_type', 'mpegts',
-    '-hls_segment_filename', path.join(HLS_DIR, 'seg_%05d.ts'),
+    '-hls_segment_filename', path.join(HLS_DIR, `${session}_%05d.ts`),
     path.join(HLS_DIR, 'index.m3u8'),
   ];
 
