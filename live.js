@@ -120,6 +120,33 @@
     }
   }
 
+  // --- theater mode ---
+  // Expands player + chat to fill the viewport; the rest of the page is pushed
+  // below the fold, not hidden. Remembered per browser.
+  const theaterBtn = document.getElementById('theater');
+  if (theaterBtn) {
+    const applyTheater = (on) => {
+      document.body.classList.toggle('theater', on);
+      theaterBtn.setAttribute('aria-pressed', String(on));
+      try {
+        localStorage.setItem('theater', on ? '1' : '0');
+      } catch { /* private browsing */ }
+    };
+    const toggleTheater = () => applyTheater(!document.body.classList.contains('theater'));
+
+    theaterBtn.addEventListener('click', toggleTheater);
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 't' || event.ctrlKey || event.metaKey || event.altKey) return;
+      // Never steal the key from someone typing in chat or a form.
+      if (/^(input|textarea|select)$/i.test(event.target.tagName)) return;
+      toggleTheater();
+    });
+
+    try {
+      if (localStorage.getItem('theater') === '1') applyTheater(true);
+    } catch { /* private browsing */ }
+  }
+
   // Add ?debug to the URL to see the player's internal state on the page. The
   // useful case is a machine where playback misbehaves but the server is fine.
   if (/[?&]debug\b/.test(location.search)) {

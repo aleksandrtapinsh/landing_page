@@ -21,7 +21,6 @@ try {
 
 const STREAM_KEY = process.env.STREAM_KEY;
 const RTMP_PORT = Number(process.env.RTMP_PORT) || 1935;
-const FLV_PORT = Number(process.env.FLV_PORT) || 8000;
 const APP_NAME = 'live';
 const HLS_DIR = path.join(__dirname, 'hls');
 // Identifies the current broadcast so the player can tell a restart apart from
@@ -109,11 +108,11 @@ function startPackaging(streamPath) {
     // orphaned ffmpeg holding the output directory.
     '-rw_timeout', '5000000',
     '-i', `rtmp://127.0.0.1:${RTMP_PORT}${streamPath}`,
-    // OBS already sends H.264; copying it keeps CPU near zero. Audio is
-    // re-encoded because it costs almost nothing and normalises whatever
-    // sample rate / layout OBS was configured with.
+    // OBS sends H.264 + AAC; both are copied untouched, so packaging costs
+    // almost no CPU — ffmpeg only re-chunks the bitstreams into segments.
+    // (Copying audio assumes AAC, which is the only codec OBS produces.)
     '-c:v', 'copy',
-    '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-ac', '2',
+    '-c:a', 'copy',
     '-f', 'hls',
     '-hls_time', '2',
     '-hls_list_size', '6',
@@ -146,10 +145,11 @@ function startPackaging(streamPath) {
   console.log(`[hls] packaging ${streamPath} -> ${path.join(HLS_DIR, 'index.m3u8')}`);
 }
 
+// No `http` block: the HTTP-FLV/WebSocket side of node-media-server is unused
+// (viewers get HLS from server.js), so don't pay for the extra listener.
 const nms = new NodeMediaServer({
   bind: '0.0.0.0',
   rtmp: { port: RTMP_PORT },
-  http: { port: FLV_PORT },
   // Publishing is gated on the stream key below; playback is public by design.
   auth: { play: false, publish: false, secret: '' },
 });

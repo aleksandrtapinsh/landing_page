@@ -44,7 +44,7 @@ npm start
 That runs both halves and prefixes their output:
 
 - **site** — static site, HLS, and `/api/live/status` on `:8080`
-- **stream** — RTMP ingest on `:1935`, HTTP-FLV on `:8000`
+- **stream** — RTMP ingest on `:1935`
 
 If either exits, the other is shut down too. To run them separately while
 debugging, `npm run site` and `npm run stream`.
@@ -60,8 +60,9 @@ Settings → Stream:
 Settings → Output:
 
 - **Encoder**: x264 or NVENC — the video must be **H.264**, which is what OBS
-  sends by default. It is passed through without re-encoding, so anything else
-  (AV1, HEVC) will not package correctly.
+  sends by default. Both video and audio are passed through without re-encoding
+  (audio must be AAC, the only codec OBS produces), so packaging costs almost no
+  server CPU — but it also means AV1/HEVC will not package correctly.
 - **Keyframe Interval**: `2` seconds. This one matters — HLS can only cut a
   segment on a keyframe, so leaving it on `0` (auto) gives ragged segment
   lengths and jumpy playback.
@@ -76,8 +77,6 @@ leave the tab open before starting the stream.
   cannot go through an HTTP reverse proxy or a Cloudflare-proxied (orange
   cloud) record. Point OBS at a DNS-only record or the server IP, and open 1935
   in the firewall.
-- **Port 8000 does not need to be public.** node-media-server exposes HTTP-FLV
-  there; playback works fine without it. Leaving it closed is the safe default.
 - Only `:8080` needs to be behind the existing reverse proxy, exactly as it is
   today — HLS is plain static files on the same origin.
 
@@ -140,7 +139,8 @@ Expect roughly 6–10 seconds glass-to-glass: HLS buffers a few 2-second
 segments. That is the tradeoff for a format that plays everywhere with no
 special client. Shorter `-hls_time` in `stream-server.js` trims it a little at
 the cost of stability. If you ever want sub-second latency, the ingest server
-already speaks HTTP-FLV on `:8000` and WebRTC would be the next step up.
+could expose node-media-server's HTTP-FLV output, and WebRTC would be the
+step up after that.
 
 ## Checking it without OBS
 
