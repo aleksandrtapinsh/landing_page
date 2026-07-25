@@ -349,6 +349,20 @@ body {
     display: none;
 }
 
+.live-viewers {
+    color: #a0a0a0;
+}
+
+/* Only draw the divider when there is a count to divide from. */
+.live-viewers:not(:empty)::before {
+    content: "";
+    display: inline-block;
+    width: 1px;
+    height: 0.7em;
+    margin: 0 0.5em -0.05em 0;
+    background: #4a4a4a;
+}
+
 .live-badge::before {
     content: "";
     width: 6px;

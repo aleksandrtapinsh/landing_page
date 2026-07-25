@@ -9,7 +9,13 @@
   const video = document.getElementById('player');
   const offline = document.getElementById('offline');
   const badge = document.getElementById('badge');
+  const viewerCount = document.getElementById('viewers');
   if (!video || !offline) return;
+
+  // Identifies this player to the server's heartbeat. Per page load, so two
+  // tabs count as two viewers, and nothing is persisted about anyone.
+  const viewerId = (crypto.randomUUID && crypto.randomUUID())
+    || Math.random().toString(36).slice(2) + Date.now().toString(36);
 
   let hls = null;
   let attached = false;
@@ -77,10 +83,17 @@
     if (badge) badge.hidden = true;
   }
 
+  function showViewers(n) {
+    if (!viewerCount) return;
+    viewerCount.textContent = n > 0 ? `${n} watching` : '';
+  }
+
   async function poll() {
     try {
-      const res = await fetch('/api/live/status', { cache: 'no-store' });
+      const query = `?id=${encodeURIComponent(viewerId)}&viewing=${attached ? 1 : 0}`;
+      const res = await fetch('/api/live/status' + query, { cache: 'no-store' });
       const status = await res.json();
+      showViewers(status.viewers);
       if (!status.live) {
         session = null;
         detach();
@@ -91,11 +104,17 @@
       // than let hls.js try to follow a sequence that ran backwards.
       if (attached && status.session !== session) detach();
       session = status.session;
+      const wasAttached = attached;
       attach();
       // Backstop: if every event we hooked has come and gone without playback
       // actually beginning, keep nudging it rather than sitting on a blank
       // frame until someone reloads the page.
       start();
+      // This poll reported us as not yet watching. Re-run once on the
+      // transition so a new viewer sees themselves in the count right away
+      // instead of a poll interval later. Cannot recurse: wasAttached is true
+      // the second time through.
+      if (attached && !wasAttached) poll();
     } catch {
       detach();
     }

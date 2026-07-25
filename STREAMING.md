@@ -98,6 +98,21 @@ sudo systemctl enable --now website
 journalctl -u website -f    # both halves log here
 ```
 
+## Viewer count
+
+The badge shows how many players are currently watching. Each open player sends
+a random per-page-load id with its 5-second status poll, and the server forgets
+anyone it has not heard from for 15 seconds.
+
+That means it counts **open players, not people**: two tabs are two viewers, and
+a viewer who closes the tab disappears within about 15 seconds rather than
+instantly. Nothing about anyone is stored or persisted — the ids live in memory
+and are gone on restart. Someone with the page open while the stream is offline,
+or who has the player paused, is not counted.
+
+Since the ids are client-supplied, the number is trivially inflatable by anyone
+who wants to; it is a display, not a metric to trust.
+
 ## Latency
 
 Expect roughly 6–10 seconds glass-to-glass: HLS buffers a few 2-second

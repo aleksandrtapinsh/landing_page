@@ -29,6 +29,28 @@ const MIME_TYPES = {
 
 const DENIED = ['node_modules', 'scripts', '.git', '.env', 'package.json', 'package-lock.json'];
 
+// Viewers are counted by heartbeat: each open player sends an id with its
+// status poll, and is forgotten if three polls go by without hearing from it.
+// This counts open players, not people — two tabs are two viewers.
+const VIEWER_TTL_MS = 15000;
+const MAX_VIEWERS = 5000;
+
+const viewers = new Map();
+
+function countViewers(id, watching) {
+  const now = Date.now();
+  for (const [key, seen] of viewers) {
+    if (now - seen >= VIEWER_TTL_MS) viewers.delete(key);
+  }
+  if (id) {
+    // Dropping the entry on `watching=false` means closing the player is
+    // reflected immediately rather than after the timeout.
+    if (watching && (viewers.has(id) || viewers.size < MAX_VIEWERS)) viewers.set(id, now);
+    else if (!watching) viewers.delete(id);
+  }
+  return viewers.size;
+}
+
 function liveState() {
   try {
     if (Date.now() - fs.statSync(HLS_PLAYLIST).mtimeMs >= LIVE_STALE_MS) {
@@ -53,9 +75,11 @@ function sendJson(res, body) {
 }
 
 const server = http.createServer((req, res) => {
+  let url;
   let urlPath;
   try {
-    urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    url = new URL(req.url, 'http://localhost');
+    urlPath = decodeURIComponent(url.pathname);
   } catch {
     res.writeHead(400);
     res.end('Bad Request');
@@ -63,7 +87,12 @@ const server = http.createServer((req, res) => {
   }
 
   if (urlPath === '/api/live/status') {
-    sendJson(res, { ...liveState(), playlist: '/hls/index.m3u8' });
+    const viewing = url.searchParams.get('viewing') === '1';
+    sendJson(res, {
+      ...liveState(),
+      viewers: countViewers(url.searchParams.get('id'), viewing),
+      playlist: '/hls/index.m3u8',
+    });
     return;
   }
 
