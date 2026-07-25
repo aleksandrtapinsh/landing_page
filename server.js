@@ -2,6 +2,17 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+// Before the lib requires: they read configuration at module load.
+try {
+  process.loadEnvFile(path.join(__dirname, '.env'));
+} catch {
+  // no .env file, fall back to the ambient environment
+}
+
+const db = require('./lib/db.js');
+const auth = require('./lib/auth.js');
+const realtime = require('./lib/realtime.js');
+
 const PORT = process.env.PORT || 8080;
 const ROOT = __dirname;
 const HLS_PLAYLIST = path.join(ROOT, 'hls', 'index.m3u8');
@@ -27,7 +38,7 @@ const MIME_TYPES = {
   '.mp4': 'video/mp4',
 };
 
-const DENIED = ['node_modules', 'scripts', '.git', '.env', 'package.json', 'package-lock.json'];
+const DENIED = ['node_modules', 'scripts', 'lib', '.git', '.env', 'package.json', 'package-lock.json'];
 
 // Viewers are counted by heartbeat: each open player sends an id with its
 // status poll, and is forgotten if three polls go by without hearing from it.
@@ -35,20 +46,65 @@ const DENIED = ['node_modules', 'scripts', '.git', '.env', 'package.json', 'pack
 const VIEWER_TTL_MS = 15000;
 const MAX_VIEWERS = 5000;
 
+// clientId -> { identity, seen }. Keyed per open player so one tab closing
+// doesn't drop a viewer who still has another open, but counted by identity so
+// a signed-in user watching from three tabs is one viewer.
 const viewers = new Map();
 
-function countViewers(id, watching) {
+function countViewers(clientId, watching, user) {
   const now = Date.now();
-  for (const [key, seen] of viewers) {
-    if (now - seen >= VIEWER_TTL_MS) viewers.delete(key);
+  for (const [key, entry] of viewers) {
+    if (now - entry.seen >= VIEWER_TTL_MS) viewers.delete(key);
   }
-  if (id) {
+
+  if (clientId) {
     // Dropping the entry on `watching=false` means closing the player is
     // reflected immediately rather than after the timeout.
-    if (watching && (viewers.has(id) || viewers.size < MAX_VIEWERS)) viewers.set(id, now);
-    else if (!watching) viewers.delete(id);
+    if (watching && (viewers.has(clientId) || viewers.size < MAX_VIEWERS)) {
+      viewers.set(clientId, { identity: user ? `u:${user.id}` : `a:${clientId}`, seen: now });
+    } else if (!watching) {
+      viewers.delete(clientId);
+    }
   }
-  return viewers.size;
+
+  const identities = new Set();
+  for (const entry of viewers.values()) identities.add(entry.identity);
+  return { viewers: identities.size, sessions: viewers.size };
+}
+
+// Enough headroom for normal use, low enough to make password guessing slow.
+const AUTH_WINDOW_MS = 15 * 60 * 1000;
+const AUTH_MAX_ATTEMPTS = 20;
+const authAttempts = new Map();
+
+function authRateLimited(ip) {
+  const now = Date.now();
+  const hits = (authAttempts.get(ip) ?? []).filter((t) => now - t < AUTH_WINDOW_MS);
+  hits.push(now);
+  authAttempts.set(ip, hits);
+  if (authAttempts.size > 10000) authAttempts.clear();
+  return hits.length > AUTH_MAX_ATTEMPTS;
+}
+
+function readJson(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+      if (body.length > 16 * 1024) {
+        reject(new auth.AuthError('Request too large.', 413));
+        req.destroy();
+      }
+    });
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch {
+        reject(new auth.AuthError('Invalid JSON.'));
+      }
+    });
+    req.on('error', reject);
+  });
 }
 
 function liveState() {
@@ -65,16 +121,48 @@ function liveState() {
   }
 }
 
-function sendJson(res, body) {
-  const data = JSON.stringify(body);
-  res.writeHead(200, {
+function sendJson(res, body, status = 200, headers = {}) {
+  res.writeHead(status, {
     'Content-Type': 'application/json',
     'Cache-Control': 'no-store',
+    ...headers,
   });
-  res.end(data);
+  res.end(JSON.stringify(body));
 }
 
-const server = http.createServer((req, res) => {
+async function handleAuth(req, res, urlPath) {
+  if (urlPath === '/api/auth/me') {
+    sendJson(res, { user: await auth.currentUser(req) });
+    return true;
+  }
+
+  if (req.method !== 'POST') {
+    sendJson(res, { error: 'Method not allowed.' }, 405);
+    return true;
+  }
+
+  if (authRateLimited(req.socket.remoteAddress)) {
+    sendJson(res, { error: 'Too many attempts. Try again later.' }, 429);
+    return true;
+  }
+
+  if (urlPath === '/api/auth/logout') {
+    await auth.destroySession(auth.parseCookies(req.headers.cookie)[auth.COOKIE]);
+    sendJson(res, { user: null }, 200, { 'Set-Cookie': auth.clearCookie(req) });
+    return true;
+  }
+
+  const body = await readJson(req);
+  const user = urlPath === '/api/auth/register'
+    ? await auth.register(body)
+    : await auth.login(body);
+
+  const { token, expiresAt } = await auth.createSession(user.id);
+  sendJson(res, { user }, 200, { 'Set-Cookie': auth.sessionCookie(req, token, expiresAt) });
+  return true;
+}
+
+async function handle(req, res) {
   let url;
   let urlPath;
   try {
@@ -86,13 +174,17 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (urlPath === '/api/auth/register' || urlPath === '/api/auth/login'
+    || urlPath === '/api/auth/logout' || urlPath === '/api/auth/me') {
+    await handleAuth(req, res, urlPath);
+    return;
+  }
+
   if (urlPath === '/api/live/status') {
     const viewing = url.searchParams.get('viewing') === '1';
-    sendJson(res, {
-      ...liveState(),
-      viewers: countViewers(url.searchParams.get('id'), viewing),
-      playlist: '/hls/index.m3u8',
-    });
+    const user = await auth.currentUser(req);
+    const counts = countViewers(url.searchParams.get('id'), viewing, user);
+    sendJson(res, { ...liveState(), ...counts, playlist: '/hls/index.m3u8' });
     return;
   }
 
@@ -131,8 +223,28 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, headers);
     res.end(data);
   });
+}
+
+const server = http.createServer((req, res) => {
+  handle(req, res).catch((err) => {
+    if (res.headersSent) return;
+    // AuthError carries a message meant for the person using the site;
+    // anything else is a bug and shouldn't leak its details.
+    const status = err.status ?? 500;
+    if (status >= 500) console.error(`[http] ${req.method} ${req.url}: ${err.stack ?? err}`);
+    sendJson(res, { error: status >= 500 ? 'Something went wrong.' : err.message }, status);
+  });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+realtime.attach(server);
+
+db.connect()
+  .then(() => {
+    console.log(`Connected to MongoDB (${db.dbName()})`);
+    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch((err) => {
+    console.error(`Could not connect to MongoDB at ${db.uri()}: ${err.message}`);
+    console.error('Accounts and chat need MongoDB. Is mongod running?');
+    process.exit(1);
+  });

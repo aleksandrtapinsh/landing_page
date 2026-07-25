@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/aleksandrtapinsh/landing_page#readme",
   "dependencies": {
-    "node-media-server": "^4.2.8"
+    "mongodb": "^7.5.0",
+    "node-media-server": "^4.2.8",
+    "ws": "^8.21.1"
   }
 }

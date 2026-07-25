@@ -14,21 +14,64 @@
     <h1><span>sasha</span>-tapinsh.online<span class="live-slash">/live</span></h1>
   </header>
 
-  <main class="live-stage">
-    <div class="live-frame">
-      <video id="player" class="live-video" controls playsinline muted autoplay></video>
-      <span id="badge" class="live-badge" hidden>LIVE<span id="viewers" class="live-viewers"></span></span>
-      <div id="offline" class="live-offline">
-        <span class="live-dot"></span>
-        <p>Offline</p>
-        <small>Nothing is streaming right now.</small>
+  <main class="live">
+    <div class="live-main">
+      <div class="live-frame">
+        <video id="player" class="live-video" controls playsinline muted autoplay></video>
+        <span id="badge" class="live-badge" hidden>LIVE<span id="viewers" class="live-viewers"></span></span>
+        <div id="offline" class="live-offline">
+          <span class="live-dot"></span>
+          <p>Offline</p>
+          <small>Nothing is streaming right now.</small>
+        </div>
       </div>
+      <a class="live-back" href="/">&larr; back</a>
     </div>
-    <a class="live-back" href="/">&larr; back</a>
+
+    <aside class="chat">
+      <div class="chat-head">
+        <span>Chat</span>
+        <div id="account" class="account"></div>
+      </div>
+      <div id="chat-log" class="chat-log"></div>
+      <form id="chat-form" class="chat-form">
+        <input id="chat-input" type="text" maxlength="500" autocomplete="off" placeholder="Say something…">
+        <button type="submit">Send</button>
+      </form>
+      <p id="chat-notice" class="chat-notice"></p>
+    </aside>
   </main>
+
+  <dialog id="account-dialog" class="account-dialog">
+    <form id="account-form">
+      <h2 id="account-title">Sign in</h2>
+      <label id="account-email-row" hidden>
+        <span>Email</span>
+        <input name="email" type="email" autocomplete="email">
+      </label>
+      <label>
+        <span>Username</span>
+        <input name="identifier" type="text" required autocomplete="username">
+      </label>
+      <label>
+        <span>Password</span>
+        <input name="password" type="password" required minlength="8" autocomplete="current-password">
+      </label>
+      <p id="account-error" class="account-error"></p>
+      <div class="account-actions">
+        <button id="account-toggle" type="button" class="account-link">Need an account?</button>
+        <div>
+          <button type="button" class="account-btn" onclick="this.closest('dialog').close()">Cancel</button>
+          <button id="account-submit" type="submit" class="account-btn account-btn--primary">Sign in</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
   <script src="live.js"></script>
+  <script src="account.js"></script>
+  <script src="chat.js"></script>
 </body>
 
 </html>

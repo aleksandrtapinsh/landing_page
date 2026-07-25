@@ -19,6 +19,12 @@ always `/hls/index.m3u8`, so the key is never exposed to viewers.
 handshake still succeeds, so OBS shows no error while the site sits on "Offline"
 forever. `stream-server.js` refuses to start if it is missing.
 
+**MongoDB is required** — accounts, chat history, and sessions live in it.
+`server.js` refuses to start if it can't connect. It defaults to
+`mongodb://127.0.0.1:27017` and creates its database (`sasha_site`) and indexes
+on first run; nothing needs to be created by hand. To point elsewhere, set
+`MONGODB_URI` (and optionally `MONGODB_DB`) in `.env`.
+
 ```sh
 sudo apt install ffmpeg   # Debian/Ubuntu
 npm install
@@ -98,20 +104,30 @@ sudo systemctl enable --now website
 journalctl -u website -f    # both halves log here
 ```
 
+## Accounts and chat
+
+Viewers can create an account (email + username + password) from the chat
+panel's header. Anyone can read chat; posting requires being signed in.
+
+- Passwords are hashed with scrypt (per-user salt); plaintext is never stored.
+- Sessions are 30-day HttpOnly cookies; only a hash of the token is stored, and
+  MongoDB expires them automatically.
+- Chat runs over a WebSocket at `/ws/chat`, keeps the last 50 messages as
+  scrollback, expires messages after 30 days, and rate-limits posting (burst of
+  5, then one message per 2 seconds). Message text is rendered with
+  `textContent`, so HTML in messages is inert.
+- Usernames are unique case-insensitively; 3–20 chars, letters/numbers/`_`/`-`.
+
 ## Viewer count
 
-The badge shows how many players are currently watching. Each open player sends
-a random per-page-load id with its 5-second status poll, and the server forgets
-anyone it has not heard from for 15 seconds.
+The badge counts **unique viewers**: signed-in users count once no matter how
+many tabs they have open (keyed by account), anonymous viewers count per open
+player. Each player sends a heartbeat with its 5-second status poll and is
+forgotten 15 seconds after it stops. The status endpoint reports both numbers
+(`viewers` unique, `sessions` raw players); the badge shows `viewers`.
 
-That means it counts **open players, not people**: two tabs are two viewers, and
-a viewer who closes the tab disappears within about 15 seconds rather than
-instantly. Nothing about anyone is stored or persisted — the ids live in memory
-and are gone on restart. Someone with the page open while the stream is offline,
-or who has the player paused, is not counted.
-
-Since the ids are client-supplied, the number is trivially inflatable by anyone
-who wants to; it is a display, not a metric to trust.
+Anonymous ids are client-supplied, so the number is still inflatable by anyone
+determined to; signing in is what makes a viewer count exactly once.
 
 ## Latency
 
