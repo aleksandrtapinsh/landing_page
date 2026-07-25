@@ -119,8 +119,39 @@ panel's header. Anyone can read chat; posting requires being signed in.
 - Signed-in users can pick a name color (click your name in the chat header or
   on one of your own messages): a swatch palette plus a free hex field. The
   choice is stored on the account, so it follows the user across sessions and
-  devices. The server validates the hex and rejects colors too dark to read on
-  the dark background. Messages keep the color they were posted with.
+  devices. The server validates the hex and rejects colors too light to read on
+  the white background. Messages keep the color they were posted with.
+
+## Moderation
+
+Grant or revoke moderator on the server:
+
+```sh
+npm run mod -- <username>            # promote
+npm run mod -- <username> --remove   # demote
+```
+
+Moderators get a **Mod** button in the chat header (and can click any name in
+the chat log) opening the roster: everyone signed into chat right now, a count
+of anonymous readers, plus any restricted users even if offline — so bans can
+be lifted after someone leaves. Per user they can:
+
+- **Timeout** — mute for 1 min to 24 h (API accepts up to a week).
+- **Ban** / **Unban** — indefinite, until lifted.
+
+Enforcement is checked against the database on every message, so it applies
+immediately to already-open connections; the affected user also gets a notice
+in their chat ("You have been timed out for 10 minutes."). Moderators cannot
+ban or time out other moderators. Bans only silence chat — they don't block
+watching the stream.
+
+## Theater mode
+
+The button in the player's top-right corner (or the `t` key) expands the
+player and chat to fill the window; everything else moves below the fold. The
+checkbox under the player — "Exit theater mode when the stream goes offline",
+on by default — automatically leaves theater when the broadcast ends. Both
+preferences are remembered per browser.
 
 ## Viewer count
 

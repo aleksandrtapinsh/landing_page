@@ -117,12 +117,12 @@
   const colorPreview = document.getElementById('color-preview');
   const colorError = document.getElementById('color-error');
 
-  // Readable on the near-black chat background; the hex field takes anything.
+  // Readable on the white chat background; the hex field takes anything.
   const PALETTE = [
-    '#e8e8e8', '#f28b82', '#ffa94d', '#fdd663', '#a3e635', '#81c995',
-    '#5eead4', '#78d9ec', '#8ab4f8', '#c58af9', '#ff8bcb', '#f9a8d4',
+    '#1f3347', '#b91c1c', '#c2410c', '#a16207', '#15803d', '#0f766e',
+    '#0369a1', '#2570c7', '#1d4ed8', '#6d28d9', '#a21caf', '#be185d',
   ];
-  const DEFAULT_COLOR = '#8ab4f8';
+  const DEFAULT_COLOR = '#2570c7';
 
   function normalizeHex(value) {
     const hex = String(value ?? '').trim().replace(/^([0-9a-fA-F]{6})$/, '#$1');
@@ -166,7 +166,7 @@
       event.preventDefault();
       const hex = normalizeHex(colorHex.value);
       if (!hex) {
-        colorError.textContent = 'Colors are hex codes like #8ab4f8.';
+        colorError.textContent = 'Colors are hex codes like #2570c7.';
         return;
       }
       try {

@@ -7,6 +7,11 @@
   const form = document.getElementById('chat-form');
   const input = document.getElementById('chat-input');
   const notice = document.getElementById('chat-notice');
+  const modOpen = document.getElementById('mod-open');
+  const modDialog = document.getElementById('mod-dialog');
+  const modList = document.getElementById('mod-list');
+  const modAnon = document.getElementById('mod-anon');
+  const modError = document.getElementById('mod-error');
   if (!log || !form) return;
 
   const RECONNECT_MIN_MS = 1000;
@@ -57,6 +62,10 @@
     log.scrollTop = log.scrollHeight;
   }
 
+  function isMod() {
+    return user?.role === 'moderator';
+  }
+
   function updateComposer() {
     const canPost = Boolean(user) && socket?.readyState === WebSocket.OPEN;
     input.disabled = !canPost;
@@ -64,6 +73,7 @@
     if (!user) notice.textContent = 'Sign in to chat.';
     else if (!canPost) notice.textContent = 'Reconnecting…';
     else notice.textContent = '';
+    if (modOpen) modOpen.hidden = !isMod();
   }
 
   function connect() {
@@ -111,11 +121,137 @@
     ws.addEventListener('error', () => ws.close());
   }
 
-  // Clicking your own name anywhere in the log opens the color picker.
+  // Clicking your own name opens the color picker; a moderator clicking
+  // anyone else's name opens the moderation roster.
   log.addEventListener('click', (event) => {
-    const who = event.target.closest('.chat-who--me');
-    if (who) document.dispatchEvent(new CustomEvent('namecolor:open'));
+    const who = event.target.closest('.chat-who');
+    if (!who) return;
+    if (who.classList.contains('chat-who--me')) {
+      document.dispatchEvent(new CustomEvent('namecolor:open'));
+    } else if (isMod()) {
+      openModDialog();
+    }
   });
+
+  // --- moderation ---
+
+  const TIMEOUT_CHOICES = [
+    [1, '1 min'], [5, '5 min'], [10, '10 min'], [60, '1 hour'], [1440, '24 hours'],
+  ];
+
+  async function modAction(path, body) {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+    return data;
+  }
+
+  function modRow(u) {
+    const row = document.createElement('div');
+    row.className = 'mod-row';
+
+    const name = document.createElement('span');
+    name.className = 'mod-name';
+    name.textContent = u.username;
+    if (/^#[0-9a-f]{6}$/i.test(u.color ?? '')) name.style.color = u.color;
+
+    const status = document.createElement('span');
+    status.className = 'mod-status';
+    if (u.role === 'moderator') status.textContent = 'mod';
+    else if (u.banned) status.textContent = 'banned';
+    else if (u.mutedUntil) {
+      const left = Math.ceil((new Date(u.mutedUntil) - Date.now()) / 60000);
+      status.textContent = `timed out ${left}m`;
+    } else status.textContent = u.online ? 'online' : '';
+
+    row.append(name, status);
+
+    // No controls against fellow moderators; the server refuses anyway.
+    if (u.role === 'moderator') return row;
+
+    const controls = document.createElement('span');
+    controls.className = 'mod-controls';
+
+    if (u.banned || u.mutedUntil) {
+      const clear = document.createElement('button');
+      clear.type = 'button';
+      clear.className = 'account-btn';
+      clear.textContent = u.banned ? 'Unban' : 'Clear';
+      clear.addEventListener('click', () => runModAction('/api/mod/unban', { username: u.username }));
+      controls.append(clear);
+    }
+    if (!u.banned) {
+      const select = document.createElement('select');
+      select.className = 'mod-select';
+      for (const [minutes, label] of TIMEOUT_CHOICES) {
+        const opt = document.createElement('option');
+        opt.value = minutes;
+        opt.textContent = label;
+        select.append(opt);
+      }
+      const timeout = document.createElement('button');
+      timeout.type = 'button';
+      timeout.className = 'account-btn';
+      timeout.textContent = 'Timeout';
+      timeout.addEventListener('click', () => runModAction('/api/mod/timeout', {
+        username: u.username, minutes: Number(select.value),
+      }));
+
+      const ban = document.createElement('button');
+      ban.type = 'button';
+      ban.className = 'account-btn mod-ban';
+      ban.textContent = 'Ban';
+      ban.addEventListener('click', () => runModAction('/api/mod/ban', { username: u.username }));
+
+      controls.append(select, timeout, ban);
+    }
+    row.append(controls);
+    return row;
+  }
+
+  async function loadChatters() {
+    modError.textContent = '';
+    try {
+      const res = await fetch('/api/mod/chatters');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+      modAnon.textContent = data.anonymous > 0
+        ? `${data.anonymous} anonymous viewer${data.anonymous === 1 ? '' : 's'} reading`
+        : '';
+      modList.textContent = '';
+      if (data.users.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'mod-empty';
+        empty.textContent = 'No signed-in users in chat.';
+        modList.append(empty);
+      }
+      for (const u of data.users) modList.append(modRow(u));
+    } catch (err) {
+      modError.textContent = err.message;
+    }
+  }
+
+  async function runModAction(path, body) {
+    modError.textContent = '';
+    try {
+      await modAction(path, body);
+      await loadChatters();
+    } catch (err) {
+      modError.textContent = err.message;
+    }
+  }
+
+  function openModDialog() {
+    if (!modDialog || !isMod()) return;
+    modDialog.showModal();
+    loadChatters();
+  }
+
+  if (modOpen) modOpen.addEventListener('click', openModDialog);
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();

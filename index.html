@@ -26,12 +26,19 @@
           <p>Offline</p>
         </div>
       </div>
+      <label class="live-setting">
+        <input type="checkbox" id="theater-exit" checked>
+        Exit theater mode when the stream goes offline
+      </label>
     </div>
 
     <aside class="chat">
       <div class="chat-head">
         <span>Chat</span>
-        <div id="account" class="account"></div>
+        <div class="chat-head-actions">
+          <button id="mod-open" class="account-btn" type="button" hidden>Mod</button>
+          <div id="account" class="account"></div>
+        </div>
       </div>
       <div id="chat-log" class="chat-log"></div>
       <form id="chat-form" class="chat-form">
@@ -74,7 +81,7 @@
       <div id="color-swatches" class="color-swatches"></div>
       <label>
         <span>Hex code</span>
-        <input id="color-hex" name="hex" type="text" maxlength="7" spellcheck="false" placeholder="#8ab4f8">
+        <input id="color-hex" name="hex" type="text" maxlength="7" spellcheck="false" placeholder="#2570c7">
       </label>
       <p id="color-preview" class="color-preview"></p>
       <p id="color-error" class="account-error"></p>
@@ -86,6 +93,17 @@
         </div>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="mod-dialog" class="account-dialog mod-dialog">
+    <h2>Chat users</h2>
+    <p id="mod-anon" class="mod-anon"></p>
+    <div id="mod-list" class="mod-list"></div>
+    <p id="mod-error" class="account-error"></p>
+    <div class="account-actions">
+      <span></span>
+      <button type="button" class="account-btn" onclick="this.closest('dialog').close()">Close</button>
+    </div>
   </dialog>
 
   <header>
@@ -128,7 +146,7 @@
   </main>
   <p style="margin-top: 3rem;
       font-size: 0.75rem;
-      color: #3a3a3a;">Connect with me!</p>
+      color: #6b8aa5;">Connect with me!</p>
   <footer style="display: flex; gap: 12px; align-items: center;">
     <a href="https://github.com/aleksandrtapinsh" target="_blank" rel="noopener">
       <img src="https://github.com/favicon.ico" target="_blank" rel="noopener" width="32" height="32">

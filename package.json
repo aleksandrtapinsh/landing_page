@@ -8,7 +8,8 @@
     "start": "node start.js",
     "site": "node server.js",
     "stream": "node stream-server.js",
-    "stream:key": "node scripts/stream-key.js"
+    "stream:key": "node scripts/stream-key.js",
+    "mod": "node scripts/make-mod.js"
   },
   "repository": {
     "type": "git",

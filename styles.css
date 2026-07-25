@@ -16,8 +16,8 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #0d0d0d;
-    color: #e8e8e8;
+    background: #ffffff;
+    color: #1f3347;
     font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -33,17 +33,17 @@ header h1 {
     font-size: 1.6rem;
     font-weight: 400;
     letter-spacing: 0.08em;
-    color: #a0a0a0;
+    color: #5b7a94;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
 header h1 span {
-    color: #e8e8e8;
+    color: #1f3347;
 }
 
 form {
-    color: #a0a0a0;
+    color: #5b7a94;
     text-align: center;
 }
 
@@ -62,17 +62,17 @@ a.card {
     justify-content: center;
     gap: 0.6rem;
     padding: 1.8rem 1rem;
-    border: 1px solid #2a2a2a;
+    border: 1px solid #bfe0f5;
     border-radius: 10px;
-    background: #161616;
+    background: #f7fbfe;
     text-decoration: none;
     color: inherit;
     transition: border-color 0.2s, background 0.2s, transform 0.15s;
 }
 
 a.card:hover {
-    border-color: #555;
-    background: #1e1e1e;
+    border-color: #89cff0;
+    background: #e8f4fc;
     transform: translateY(-2px);
 }
 
@@ -91,7 +91,7 @@ a.card span {
 footer {
     margin-top: 1.5em;
     font-size: 0.75rem;
-    color: #3a3a3a;
+    color: #8fb3cf;
 }
 
 body,
@@ -100,7 +100,7 @@ body,
 }
 
 body {
-    background: #f1f1f1;
+    background: #ffffff;
     /* min-height, not height: the player makes the page taller than the
        viewport on short screens, and a fixed height would clip it. */
     min-height: 100vh;
@@ -145,7 +145,7 @@ body {
 .search-bar input {
     background: transparent;
     border-radius: 1.5em;
-    box-shadow: 0 0 0 0.4em #171717 inset;
+    box-shadow: 0 0 0 0.4em #89cff0 inset;
     padding: 0.75em;
     transform: translate(0.5em, 0.5em) scale(0.5);
     transform-origin: 100% 0;
@@ -163,12 +163,12 @@ body {
 .search-bar input:valid {
     background: #fff;
     border-radius: 0.375em 0 0 0.375em;
-    box-shadow: 0 0 0 0.1em #d9d9d9 inset;
+    box-shadow: 0 0 0 0.1em #bfe0f5 inset;
     transform: scale(1);
 }
 
 .search-btn {
-    background: #171717;
+    background: #89cff0;
     border-radius: 0 0.75em 0.75em 0 / 0 1.5em 1.5em 0;
     padding: 0.75em;
     position: relative;
@@ -186,7 +186,7 @@ body {
 
 .search-btn:before {
     border-radius: 50%;
-    box-shadow: 0 0 0 0.2em #f1f1f1 inset;
+    box-shadow: 0 0 0 0.2em #ffffff inset;
     top: 0.75em;
     left: 0.75em;
     width: 1.2em;
@@ -194,7 +194,7 @@ body {
 }
 
 .search-btn:after {
-    background: #f1f1f1;
+    background: #ffffff;
     border-radius: 0 0.25em 0.25em 0;
     top: 51%;
     left: 51%;
@@ -214,7 +214,7 @@ body {
 /* Active state */
 .search-bar input:focus+.search-btn,
 .search-bar input:valid+.search-btn {
-    background: #a0a0a0;
+    background: #56aede;
     border-radius: 0 0.375em 0.375em 0;
     transform: scale(1);
 }
@@ -229,7 +229,7 @@ body {
 .search-bar input:focus+.search-btn:hover,
 .search-bar input:valid+.search-btn:hover,
 .search-bar input:valid:not(:focus)+.search-btn:focus {
-    background: #777;
+    background: #3f9fd8;
 }
 
 .search-bar input:focus+.search-btn:active,
@@ -237,35 +237,11 @@ body {
     transform: translateY(1px);
 }
 
-@media screen and (prefers-color-scheme: dark) {
 
-    body,
-    input {
-        color: #f1f1f1;
-    }
-
-    body {
-        background: #171717;
-    }
-
-    .search-bar input {
-        box-shadow: 0 0 0 0.4em #f1f1f1 inset;
-    }
-
-    .search-bar input:focus,
-    .search-bar input:valid {
-        background: #3d3d3d;
-        box-shadow: 0 0 0 0.1em #3d3d3d inset;
-    }
-
-    .search-btn {
-        background: #f1f1f1;
-    }
-}
 /* --- live page --- */
 
 .live-slash {
-    color: #a0a0a0;
+    color: #5b7a94;
 }
 
 /* Player and chat side by side, above everything else. */
@@ -302,8 +278,9 @@ body {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-    border: 1px solid #2a2a2a;
+    border: 1px solid #bfe0f5;
     border-radius: 10px;
+    /* Stays dark: this is the letterbox behind the video. */
     background: #0d0d0d;
     overflow: hidden;
 }
@@ -323,8 +300,8 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    background: #161616;
-    color: #a0a0a0;
+    background: #f7fbfe;
+    color: #5b7a94;
     letter-spacing: 0.04em;
 }
 
@@ -338,14 +315,14 @@ body {
 
 .live-offline small {
     font-size: 0.75rem;
-    color: #3a3a3a;
+    color: #8fb3cf;
 }
 
 .live-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #3a3a3a;
+    background: #8fb3cf;
 }
 
 .live-badge {
@@ -358,7 +335,7 @@ body {
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
     background: rgba(13, 13, 13, 0.75);
-    color: #e8e8e8;
+    color: #ffffff;
     font-size: 0.65rem;
     letter-spacing: 0.12em;
     pointer-events: none;
@@ -369,7 +346,8 @@ body {
 }
 
 .live-viewers {
-    color: #a0a0a0;
+    /* Sits inside the dark badge, not on the page background. */
+    color: #c8dcee;
 }
 
 /* Only draw the divider when there is a count to divide from. */
@@ -379,7 +357,7 @@ body {
     width: 1px;
     height: 0.7em;
     margin: 0 0.5em -0.05em 0;
-    background: #4a4a4a;
+    background: #a7c4da;
 }
 
 .live-badge::before {
@@ -413,13 +391,13 @@ body {
     align-self: flex-start;
     font-size: 0.75rem;
     letter-spacing: 0.04em;
-    color: #3a3a3a;
+    color: #8fb3cf;
     text-decoration: none;
     transition: color 0.2s;
 }
 
 .live-back:hover {
-    color: #a0a0a0;
+    color: #5b7a94;
 }
 
 /* --- chat --- */
@@ -429,9 +407,9 @@ body {
     flex-direction: column;
     flex: 0 0 300px;
     min-height: 0;
-    border: 1px solid #2a2a2a;
+    border: 1px solid #bfe0f5;
     border-radius: 10px;
-    background: #161616;
+    background: #f7fbfe;
     overflow: hidden;
 }
 
@@ -441,11 +419,11 @@ body {
     justify-content: space-between;
     gap: 0.5rem;
     padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid #2a2a2a;
+    border-bottom: 1px solid #bfe0f5;
     font-size: 0.75rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #a0a0a0;
+    color: #5b7a94;
 }
 
 .chat-log {
@@ -466,21 +444,21 @@ body {
 }
 
 .chat-who {
-    color: #8ab4f8;
+    color: #2570c7;
     margin-right: 0.4em;
 }
 
 .chat-who::after {
     content: ":";
-    color: #3a3a3a;
+    color: #8fb3cf;
 }
 
 .chat-text {
-    color: #e8e8e8;
+    color: #1f3347;
 }
 
 .chat-system {
-    color: #6a6a6a;
+    color: #6b8aa5;
     font-style: italic;
     font-size: 0.8rem;
 }
@@ -489,36 +467,36 @@ body {
     display: flex;
     gap: 0.4rem;
     padding: 0.6rem;
-    border-top: 1px solid #2a2a2a;
+    border-top: 1px solid #bfe0f5;
 }
 
 .chat-form input {
     flex: 1 1 auto;
     min-width: 0;
     padding: 0.5rem 0.6rem;
-    border: 1px solid #2a2a2a;
+    border: 1px solid #bfe0f5;
     border-radius: 6px;
-    background: #0d0d0d;
-    color: #e8e8e8;
+    background: #ffffff;
+    color: #1f3347;
     font-family: inherit;
     font-size: 0.85rem;
 }
 
 .chat-form input:focus {
     outline: none;
-    border-color: #555;
+    border-color: #89cff0;
 }
 
 .chat-form input:disabled {
-    color: #4a4a4a;
+    color: #a7c4da;
 }
 
 .chat-form button {
     padding: 0.5rem 0.75rem;
-    border: 1px solid #2a2a2a;
+    border: 1px solid #bfe0f5;
     border-radius: 6px;
-    background: #1e1e1e;
-    color: #e8e8e8;
+    background: #e8f4fc;
+    color: #1f3347;
     font-family: inherit;
     font-size: 0.8rem;
     cursor: pointer;
@@ -526,12 +504,12 @@ body {
 }
 
 .chat-form button:hover:not(:disabled) {
-    border-color: #555;
-    background: #262626;
+    border-color: #89cff0;
+    background: #d9edfa;
 }
 
 .chat-form button:disabled {
-    color: #4a4a4a;
+    color: #a7c4da;
     cursor: default;
 }
 
@@ -542,7 +520,7 @@ body {
 .chat-notice {
     padding: 0 0.75rem 0.6rem;
     font-size: 0.75rem;
-    color: #6a6a6a;
+    color: #6b8aa5;
 }
 
 /* --- account --- */
@@ -554,17 +532,17 @@ body {
 }
 
 .account-name {
-    color: #e8e8e8;
+    color: #1f3347;
     text-transform: none;
     letter-spacing: 0.02em;
 }
 
 .account-btn {
     padding: 0.3rem 0.5rem;
-    border: 1px solid #2a2a2a;
+    border: 1px solid #bfe0f5;
     border-radius: 6px;
-    background: #1e1e1e;
-    color: #a0a0a0;
+    background: #e8f4fc;
+    color: #5b7a94;
     font-family: inherit;
     font-size: 0.7rem;
     letter-spacing: 0.04em;
@@ -573,26 +551,26 @@ body {
 }
 
 .account-btn:hover {
-    border-color: #555;
-    color: #e8e8e8;
+    border-color: #89cff0;
+    color: #1f3347;
 }
 
 .account-btn--primary {
-    background: #2a2a2a;
-    color: #e8e8e8;
+    background: #bfe0f5;
+    color: #1f3347;
 }
 
 .account-dialog {
-    border: 1px solid #2a2a2a;
+    border: 1px solid #bfe0f5;
     border-radius: 10px;
-    background: #161616;
-    color: #e8e8e8;
+    background: #f7fbfe;
+    color: #1f3347;
     padding: 1.25rem;
     width: min(340px, 92vw);
 }
 
 .account-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(31, 51, 71, 0.35);
 }
 
 .account-dialog h2 {
@@ -617,23 +595,23 @@ body {
     font-size: 0.7rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #a0a0a0;
+    color: #5b7a94;
 }
 
 .account-dialog input {
     width: 100%;
     padding: 0.5rem 0.6rem;
-    border: 1px solid #2a2a2a;
+    border: 1px solid #bfe0f5;
     border-radius: 6px;
-    background: #0d0d0d;
-    color: #e8e8e8;
+    background: #ffffff;
+    color: #1f3347;
     font-family: inherit;
     font-size: 0.9rem;
 }
 
 .account-dialog input:focus {
     outline: none;
-    border-color: #555;
+    border-color: #89cff0;
 }
 
 .account-error:empty {
@@ -662,7 +640,7 @@ body {
     border: 0;
     background: none;
     padding: 0;
-    color: #6a6a6a;
+    color: #6b8aa5;
     font-family: inherit;
     font-size: 0.75rem;
     text-decoration: underline;
@@ -670,7 +648,7 @@ body {
 }
 
 .account-link:hover {
-    color: #a0a0a0;
+    color: #5b7a94;
 }
 
 /* The global `form` rule centres text; these want normal alignment. */
@@ -725,7 +703,7 @@ button.account-name:hover {
 }
 
 .color-swatch--active {
-    border-color: #e8e8e8;
+    border-color: #1f3347;
 }
 
 .color-preview:empty {
@@ -736,13 +714,13 @@ button.account-name:hover {
     margin-bottom: 0.75rem;
     padding: 0.5rem 0.6rem;
     border-radius: 6px;
-    background: #0d0d0d;
+    background: #ffffff;
     font-size: 0.9rem;
 }
 
 .color-preview::after {
     content: ": your name will look like this";
-    color: #6a6a6a;
+    color: #6b8aa5;
     font-size: 0.8rem;
 }
 
@@ -759,17 +737,17 @@ button.account-name:hover {
     border: 0;
     border-radius: 4px;
     background: rgba(13, 13, 13, 0.75);
-    color: #a0a0a0;
+    color: #5b7a94;
     cursor: pointer;
     transition: color 0.2s;
 }
 
 .theater-btn:hover {
-    color: #e8e8e8;
+    color: #ffffff;
 }
 
 .theater-btn[aria-pressed="true"] {
-    color: #e8e8e8;
+    color: #ffffff;
 }
 
 /* Player + chat fill the viewport; everything below is pushed past the fold. */
@@ -824,4 +802,98 @@ body.theater .live-frame {
 /* Hide scrollbar for Chrome, Safari, and Opera */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* --- theater/offline setting --- */
+
+.live-setting {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: #6b8aa5;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.live-setting input {
+    accent-color: #56aede;
+}
+
+/* --- moderation --- */
+
+.chat-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.mod-dialog {
+    width: min(440px, 94vw);
+}
+
+.mod-anon:empty {
+    display: none;
+}
+
+.mod-anon {
+    margin-bottom: 0.6rem;
+    font-size: 0.75rem;
+    color: #6b8aa5;
+}
+
+.mod-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 0.75rem;
+}
+
+.mod-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid #d9edfa;
+    border-radius: 6px;
+    background: #ffffff;
+}
+
+.mod-name {
+    font-size: 0.85rem;
+    color: #2570c7;
+}
+
+.mod-status {
+    flex: 1 1 auto;
+    font-size: 0.7rem;
+    color: #6b8aa5;
+}
+
+.mod-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.mod-select {
+    padding: 0.25rem;
+    border: 1px solid #bfe0f5;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #1f3347;
+    font-family: inherit;
+    font-size: 0.7rem;
+}
+
+.mod-ban {
+    color: #b91c1c;
+}
+
+.mod-empty {
+    font-size: 0.8rem;
+    color: #6b8aa5;
 }

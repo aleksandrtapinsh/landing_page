@@ -178,19 +178,107 @@ async function handleNameColor(req, res) {
 
   const color = String((await readJson(req)).color ?? '').trim().toLowerCase();
   if (!HEX_COLOR_RE.test(color)) {
-    sendJson(res, { error: 'Colors are hex codes like #8ab4f8.' }, 400);
+    sendJson(res, { error: 'Colors are hex codes like #2570c7.' }, 400);
     return;
   }
-  // The chat sits on a near-black background; a name darker than this floor
+  // The chat sits on a white background; a name lighter than this ceiling
   // would be unreadable, so refuse it rather than let someone vanish.
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
-  if ((0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.3) {
-    sendJson(res, { error: 'That color is too dark to read here — pick a brighter one.' }, 400);
+  if ((0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.72) {
+    sendJson(res, { error: 'That color is too light to read here — pick a darker one.' }, 400);
     return;
   }
 
   await db.users().updateOne({ _id: new ObjectId(user.id) }, { $set: { nameColor: color } });
   sendJson(res, { user: { ...user, nameColor: color } });
+}
+
+// One week is the longest timeout a moderator can hand out.
+const TIMEOUT_MAX_MINUTES = 7 * 24 * 60;
+
+async function handleMod(req, res, urlPath) {
+  const me = await auth.currentUser(req);
+  if (!me || me.role !== 'moderator') {
+    sendJson(res, { error: 'Moderators only.' }, 403);
+    return;
+  }
+
+  if (urlPath === '/api/mod/chatters') {
+    const { online, anonymous } = realtime.listChatters();
+    const onlineIds = new Set(online.map((u) => u.id));
+    // Also list restricted users who are not connected right now, otherwise a
+    // ban could never be lifted once the person left.
+    const restricted = await db.users()
+      .find(
+        { $or: [{ bannedAt: { $ne: null } }, { mutedUntil: { $gt: new Date() } }] },
+        { projection: { username: 1, nameColor: 1, role: 1, bannedAt: 1, mutedUntil: 1 } },
+      )
+      .toArray();
+
+    const rows = new Map();
+    for (const u of online) {
+      rows.set(u.id, {
+        username: u.username, color: u.nameColor, role: u.role, online: true,
+        banned: false, mutedUntil: null,
+      });
+    }
+    for (const u of restricted) {
+      const id = u._id.toString();
+      const row = rows.get(id) ?? {
+        username: u.username, color: u.nameColor ?? null, role: u.role ?? null,
+        online: onlineIds.has(id), banned: false, mutedUntil: null,
+      };
+      row.banned = Boolean(u.bannedAt);
+      row.mutedUntil = u.mutedUntil && u.mutedUntil > new Date() ? u.mutedUntil.toISOString() : null;
+      rows.set(id, row);
+    }
+    sendJson(res, { anonymous, users: [...rows.values()] });
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    sendJson(res, { error: 'Method not allowed.' }, 405);
+    return;
+  }
+
+  const body = await readJson(req);
+  const username = String(body.username ?? '').trim().toLowerCase();
+  const target = await db.users().findOne({ usernameLower: username });
+  if (!target) {
+    sendJson(res, { error: 'No such user.' }, 404);
+    return;
+  }
+  if (target.role === 'moderator') {
+    sendJson(res, { error: "Moderators can't be moderated." }, 400);
+    return;
+  }
+  const targetId = target._id.toString();
+
+  if (urlPath === '/api/mod/ban') {
+    await db.users().updateOne({ _id: target._id }, { $set: { bannedAt: new Date() } });
+    realtime.notifyUser(targetId, { type: 'error', message: 'You have been banned from chat.' });
+    console.log(`[mod] ${me.username} banned ${target.username}`);
+  } else if (urlPath === '/api/mod/unban') {
+    await db.users().updateOne({ _id: target._id }, { $unset: { bannedAt: '', mutedUntil: '' } });
+    console.log(`[mod] ${me.username} unrestricted ${target.username}`);
+  } else if (urlPath === '/api/mod/timeout') {
+    const minutes = Math.floor(Number(body.minutes));
+    if (!Number.isFinite(minutes) || minutes < 1 || minutes > TIMEOUT_MAX_MINUTES) {
+      sendJson(res, { error: `Timeout must be 1 to ${TIMEOUT_MAX_MINUTES} minutes.` }, 400);
+      return;
+    }
+    const mutedUntil = new Date(Date.now() + minutes * 60000);
+    await db.users().updateOne({ _id: target._id }, { $set: { mutedUntil } });
+    realtime.notifyUser(targetId, {
+      type: 'error',
+      message: `You have been timed out for ${minutes} minute${minutes === 1 ? '' : 's'}.`,
+    });
+    console.log(`[mod] ${me.username} timed out ${target.username} for ${minutes}m`);
+  } else {
+    sendJson(res, { error: 'Not found.' }, 404);
+    return;
+  }
+  sendJson(res, { ok: true });
 }
 
 async function handle(req, res) {
@@ -213,6 +301,11 @@ async function handle(req, res) {
 
   if (urlPath === '/api/user/color') {
     await handleNameColor(req, res);
+    return;
+  }
+
+  if (urlPath.startsWith('/api/mod/')) {
+    await handleMod(req, res, urlPath);
     return;
   }
 

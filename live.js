@@ -21,6 +21,9 @@
   let attached = false;
   let session = null;
   let playing = false;
+  // Assigned by the theater block below; called whenever a poll sees the
+  // stream offline so the "exit theater when offline" option can act on it.
+  let onStreamOffline = () => {};
 
   // Safari (and iOS) plays HLS natively; everywhere else needs hls.js.
   const nativeHls = video.canPlayType('application/vnd.apple.mpegurl') !== '';
@@ -97,6 +100,7 @@
       if (!status.live) {
         session = null;
         detach();
+        onStreamOffline();
         return;
       }
       // A restart between two polls looks like a live stream that never
@@ -142,7 +146,33 @@
       toggleTheater();
     });
 
+    // "Exit theater mode when the stream goes offline" — on by default; the
+    // checkbox under the player turns it off. Remembered per browser.
+    const exitToggle = document.getElementById('theater-exit');
+    const autoExitEnabled = () => {
+      try {
+        return localStorage.getItem('theaterAutoExit') !== '0';
+      } catch {
+        return true;
+      }
+    };
+    if (exitToggle) {
+      exitToggle.checked = autoExitEnabled();
+      exitToggle.addEventListener('change', () => {
+        try {
+          localStorage.setItem('theaterAutoExit', exitToggle.checked ? '1' : '0');
+        } catch { /* private browsing */ }
+      });
+    }
+    onStreamOffline = () => {
+      if (autoExitEnabled() && document.body.classList.contains('theater')) {
+        applyTheater(false);
+      }
+    };
+
     try {
+      // Don't restore theater onto an offline stream if auto-exit is on —
+      // that would just fill the screen with the offline placeholder.
       if (localStorage.getItem('theater') === '1') applyTheater(true);
     } catch { /* private browsing */ }
   }
