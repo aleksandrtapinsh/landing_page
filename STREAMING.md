@@ -15,21 +15,33 @@ always `/hls/index.m3u8`, so the key is never exposed to viewers.
 
 ## Setup
 
+**ffmpeg is required** — it does the RTMP-to-HLS packaging. Without it the RTMP
+handshake still succeeds, so OBS shows no error while the site sits on "Offline"
+forever. `stream-server.js` refuses to start if it is missing.
+
 ```sh
+sudo apt install ffmpeg   # Debian/Ubuntu
 npm install
-npm run stream:key    # writes STREAM_KEY to .env and prints the OBS settings
+npm run stream:key        # writes STREAM_KEY to .env and prints the OBS settings
 ```
 
-`.env` is gitignored. To rotate the key later: `npm run stream:key -- --force`.
+`node_modules/` and `.env` are both gitignored, so a fresh deploy needs
+`npm install` and its own `npm run stream:key` — the key does not travel with
+the repo. To rotate it later: `npm run stream:key -- --force`.
 
 ## Running
 
-Two processes:
-
 ```sh
-npm start      # static site + HLS on :8080
-npm run stream # RTMP ingest on :1935, HTTP-FLV on :8000
+npm start
 ```
+
+That runs both halves and prefixes their output:
+
+- **site** — static site, HLS, and `/api/live/status` on `:8080`
+- **stream** — RTMP ingest on `:1935`, HTTP-FLV on `:8000`
+
+If either exits, the other is shut down too. To run them separately while
+debugging, `npm run site` and `npm run stream`.
 
 ## OBS
 
@@ -63,7 +75,8 @@ leave the tab open before starting the stream.
 - Only `:8080` needs to be behind the existing reverse proxy, exactly as it is
   today — HLS is plain static files on the same origin.
 
-Two systemd units, if you want it running unattended:
+One systemd unit, if you want it running unattended (adjust the paths and user
+to match the server):
 
 ```ini
 # /etc/systemd/system/website.service
@@ -71,28 +84,18 @@ Two systemd units, if you want it running unattended:
 After=network.target
 
 [Service]
-WorkingDirectory=/home/diemoirai/Documents/website
-ExecStart=/usr/bin/node server.js
+WorkingDirectory=/srv/website
+ExecStart=/usr/bin/node start.js
 Restart=always
-User=diemoirai
+User=sasha
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-```ini
-# /etc/systemd/system/website-stream.service
-[Unit]
-After=network.target
-
-[Service]
-WorkingDirectory=/home/diemoirai/Documents/website
-ExecStart=/usr/bin/node stream-server.js
-Restart=always
-User=diemoirai
-
-[Install]
-WantedBy=multi-user.target
+```sh
+sudo systemctl enable --now website
+journalctl -u website -f    # both halves log here
 ```
 
 ## Latency

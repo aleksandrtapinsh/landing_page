@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
+    "start": "node start.js",
+    "site": "node server.js",
     "stream": "node stream-server.js",
     "stream:key": "node scripts/stream-key.js"
   },

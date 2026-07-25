@@ -10,7 +10,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const NodeMediaServer = require('node-media-server');
 
 try {
@@ -27,6 +27,14 @@ const HLS_DIR = path.join(__dirname, 'hls');
 
 if (!STREAM_KEY) {
   console.error('STREAM_KEY is not set. Run `npm run stream:key` to generate one.');
+  process.exit(1);
+}
+
+// Without ffmpeg the RTMP handshake still succeeds, so OBS reports no error and
+// the site just sits on "Offline" forever. Fail here instead, where it's visible.
+if (spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).error) {
+  console.error('ffmpeg was not found on PATH, but it is required to package the stream.');
+  console.error('Install it, e.g.  sudo apt install ffmpeg');
   process.exit(1);
 }
 
@@ -109,10 +117,19 @@ function startPackaging(streamPath) {
   const child = ffmpeg;
 
   child.stderr.on('data', (chunk) => process.stderr.write(`[ffmpeg] ${chunk}`));
-  child.on('error', (err) => console.error(`[ffmpeg] failed to start: ${err.message}`));
+  child.on('error', (err) => {
+    console.error(`[ffmpeg] FAILED TO START: ${err.message}`);
+    console.error('[ffmpeg] the stream is being received but cannot be packaged for playback.');
+  });
   child.on('exit', (code, signal) => {
     if (ffmpeg === child) ffmpeg = null;
-    console.log(`[ffmpeg] exited (code=${code} signal=${signal})`);
+    if (code) {
+      // A non-zero exit while publishing means playback is broken; the usual
+      // cause is OBS encoding something other than H.264, which can't be copied.
+      console.error(`[ffmpeg] EXITED WITH ERROR (code=${code}) — check the output above.`);
+    } else {
+      console.log(`[ffmpeg] exited (code=${code} signal=${signal})`);
+    }
   });
 
   console.log(`[hls] packaging ${streamPath} -> ${path.join(HLS_DIR, 'index.m3u8')}`);
