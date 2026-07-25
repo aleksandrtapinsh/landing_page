@@ -249,7 +249,8 @@ body {
     display: flex;
     align-items: stretch;
     gap: 1rem;
-    width: min(1040px, 94vw);
+    width: 100%;
+    max-width: none;
     margin-bottom: 2rem;
 }
 
