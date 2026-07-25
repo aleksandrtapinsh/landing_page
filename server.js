@@ -9,6 +9,7 @@ try {
   // no .env file, fall back to the ambient environment
 }
 
+const { ObjectId } = require('mongodb');
 const db = require('./lib/db.js');
 const auth = require('./lib/auth.js');
 const realtime = require('./lib/realtime.js');
@@ -162,6 +163,36 @@ async function handleAuth(req, res, urlPath) {
   return true;
 }
 
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+
+async function handleNameColor(req, res) {
+  if (req.method !== 'POST') {
+    sendJson(res, { error: 'Method not allowed.' }, 405);
+    return;
+  }
+  const user = await auth.currentUser(req);
+  if (!user) {
+    sendJson(res, { error: 'Sign in first.' }, 401);
+    return;
+  }
+
+  const color = String((await readJson(req)).color ?? '').trim().toLowerCase();
+  if (!HEX_COLOR_RE.test(color)) {
+    sendJson(res, { error: 'Colors are hex codes like #8ab4f8.' }, 400);
+    return;
+  }
+  // The chat sits on a near-black background; a name darker than this floor
+  // would be unreadable, so refuse it rather than let someone vanish.
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+  if ((0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.3) {
+    sendJson(res, { error: 'That color is too dark to read here — pick a brighter one.' }, 400);
+    return;
+  }
+
+  await db.users().updateOne({ _id: new ObjectId(user.id) }, { $set: { nameColor: color } });
+  sendJson(res, { user: { ...user, nameColor: color } });
+}
+
 async function handle(req, res) {
   let url;
   let urlPath;
@@ -177,6 +208,11 @@ async function handle(req, res) {
   if (urlPath === '/api/auth/register' || urlPath === '/api/auth/login'
     || urlPath === '/api/auth/logout' || urlPath === '/api/auth/me') {
     await handleAuth(req, res, urlPath);
+    return;
+  }
+
+  if (urlPath === '/api/user/color') {
+    await handleNameColor(req, res);
     return;
   }
 

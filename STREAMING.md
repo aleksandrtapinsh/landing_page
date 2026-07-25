@@ -117,6 +117,11 @@ panel's header. Anyone can read chat; posting requires being signed in.
   5, then one message per 2 seconds). Message text is rendered with
   `textContent`, so HTML in messages is inert.
 - Usernames are unique case-insensitively; 3–20 chars, letters/numbers/`_`/`-`.
+- Signed-in users can pick a name color (click your name in the chat header or
+  on one of your own messages): a swatch palette plus a free hex field. The
+  choice is stored on the account, so it follows the user across sessions and
+  devices. The server validates the hex and rejects colors too dark to read on
+  the dark background. Messages keep the color they were posted with.
 
 ## Viewer count
 

@@ -25,9 +25,13 @@
   function render() {
     bar.textContent = '';
     if (user) {
-      const name = document.createElement('span');
+      const name = document.createElement('button');
+      name.type = 'button';
       name.className = 'account-name';
+      name.title = 'Change your name color';
       name.textContent = user.username;
+      if (user.nameColor) name.style.color = user.nameColor;
+      name.addEventListener('click', openColorPicker);
       const out = document.createElement('button');
       out.className = 'account-btn';
       out.textContent = 'Sign out';
@@ -103,6 +107,80 @@
   });
 
   toggle.addEventListener('click', () => setMode(mode === 'login' ? 'register' : 'login'));
+
+  // --- name color picker ---
+
+  const colorDialog = document.getElementById('color-dialog');
+  const colorForm = document.getElementById('color-form');
+  const colorSwatches = document.getElementById('color-swatches');
+  const colorHex = document.getElementById('color-hex');
+  const colorPreview = document.getElementById('color-preview');
+  const colorError = document.getElementById('color-error');
+
+  // Readable on the near-black chat background; the hex field takes anything.
+  const PALETTE = [
+    '#e8e8e8', '#f28b82', '#ffa94d', '#fdd663', '#a3e635', '#81c995',
+    '#5eead4', '#78d9ec', '#8ab4f8', '#c58af9', '#ff8bcb', '#f9a8d4',
+  ];
+  const DEFAULT_COLOR = '#8ab4f8';
+
+  function normalizeHex(value) {
+    const hex = String(value ?? '').trim().replace(/^([0-9a-fA-F]{6})$/, '#$1');
+    return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex.toLowerCase() : null;
+  }
+
+  function paintPicker(color) {
+    colorHex.value = color;
+    colorPreview.textContent = user ? user.username : '';
+    colorPreview.style.color = color;
+    for (const btn of colorSwatches.children) {
+      btn.classList.toggle('color-swatch--active', btn.dataset.color === color);
+    }
+  }
+
+  function openColorPicker() {
+    if (!user || !colorDialog) return;
+    colorError.textContent = '';
+    paintPicker(user.nameColor || DEFAULT_COLOR);
+    colorDialog.showModal();
+  }
+
+  if (colorDialog) {
+    for (const color of PALETTE) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'color-swatch';
+      btn.dataset.color = color;
+      btn.style.background = color;
+      btn.title = color;
+      btn.addEventListener('click', () => paintPicker(color));
+      colorSwatches.append(btn);
+    }
+
+    colorHex.addEventListener('input', () => {
+      const hex = normalizeHex(colorHex.value);
+      if (hex) paintPicker(hex);
+    });
+
+    colorForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const hex = normalizeHex(colorHex.value);
+      if (!hex) {
+        colorError.textContent = 'Colors are hex codes like #8ab4f8.';
+        return;
+      }
+      try {
+        const data = await api('/api/user/color', { color: hex });
+        announce(data.user);
+        colorDialog.close();
+      } catch (err) {
+        colorError.textContent = err.message;
+      }
+    });
+
+    // Lets chat.js open the picker when someone clicks their own name.
+    document.addEventListener('namecolor:open', openColorPicker);
+  }
 
   setMode('login');
   render();

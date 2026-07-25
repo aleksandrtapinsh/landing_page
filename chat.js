@@ -31,6 +31,12 @@
     const who = document.createElement('span');
     who.className = 'chat-who';
     who.textContent = msg.username;
+    // Only a validated hex ever reaches the style, whatever the server sent.
+    if (/^#[0-9a-f]{6}$/i.test(msg.color ?? '')) who.style.color = msg.color;
+    if (user && msg.username === user.username) {
+      who.classList.add('chat-who--me');
+      who.title = 'Change your name color';
+    }
 
     const text = document.createElement('span');
     text.className = 'chat-text';
@@ -104,6 +110,12 @@
 
     ws.addEventListener('error', () => ws.close());
   }
+
+  // Clicking your own name anywhere in the log opens the color picker.
+  log.addEventListener('click', (event) => {
+    const who = event.target.closest('.chat-who--me');
+    if (who) document.dispatchEvent(new CustomEvent('namecolor:open'));
+  });
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();

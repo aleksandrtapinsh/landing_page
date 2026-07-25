@@ -68,6 +68,26 @@
     </form>
   </dialog>
 
+  <dialog id="color-dialog" class="account-dialog">
+    <form id="color-form">
+      <h2>Name color</h2>
+      <div id="color-swatches" class="color-swatches"></div>
+      <label>
+        <span>Hex code</span>
+        <input id="color-hex" name="hex" type="text" maxlength="7" spellcheck="false" placeholder="#8ab4f8">
+      </label>
+      <p id="color-preview" class="color-preview"></p>
+      <p id="color-error" class="account-error"></p>
+      <div class="account-actions">
+        <span></span>
+        <div>
+          <button type="button" class="account-btn" onclick="this.closest('dialog').close()">Cancel</button>
+          <button type="submit" class="account-btn account-btn--primary">Save</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
   <script src="live.js"></script>
   <script src="account.js"></script>
