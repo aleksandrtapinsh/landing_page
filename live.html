@@ -17,6 +17,7 @@
   <main class="live-stage">
     <div class="live-frame">
       <video id="player" class="live-video" controls playsinline muted></video>
+      <span id="badge" class="live-badge" hidden>LIVE</span>
       <div id="offline" class="live-offline">
         <span class="live-dot"></span>
         <p>Offline</p>
@@ -27,68 +28,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
-  <script>
-    const PLAYLIST = '/hls/index.m3u8';
-    const video = document.getElementById('player');
-    const offline = document.getElementById('offline');
-
-    let hls = null;
-    let attached = false;
-
-    // Safari (and iOS) plays HLS natively; everywhere else needs hls.js.
-    const nativeHls = video.canPlayType('application/vnd.apple.mpegurl') !== '';
-
-    function attach() {
-      if (attached) return;
-      attached = true;
-
-      if (nativeHls) {
-        video.src = PLAYLIST;
-      } else if (window.Hls && Hls.isSupported()) {
-        hls = new Hls({ lowLatencyMode: true, backBufferLength: 30 });
-        hls.loadSource(PLAYLIST);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.ERROR, (_, data) => {
-          if (!data.fatal) return;
-          // A fatal error usually means the publisher dropped; fall back to
-          // the offline state and let polling bring us back.
-          detach();
-        });
-      } else {
-        return;
-      }
-
-      offline.hidden = true;
-      video.play().catch(() => { /* autoplay blocked; controls are there */ });
-    }
-
-    function detach() {
-      if (!attached) return;
-      attached = false;
-
-      if (hls) {
-        hls.destroy();
-        hls = null;
-      }
-      video.removeAttribute('src');
-      video.load();
-      offline.hidden = false;
-    }
-
-    async function poll() {
-      try {
-        const res = await fetch('/api/live/status', { cache: 'no-store' });
-        const { live } = await res.json();
-        if (live) attach();
-        else detach();
-      } catch {
-        detach();
-      }
-    }
-
-    poll();
-    setInterval(poll, 5000);
-  </script>
+  <script src="live.js"></script>
 </body>
 
 </html>

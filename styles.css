@@ -97,7 +97,10 @@ body,
 
 body {
     background: #f1f1f1;
-    height: 100vh;
+    /* min-height, not height: the player makes the page taller than the
+       viewport on short screens, and a fixed height would clip it. */
+    min-height: 100vh;
+    padding: 2rem 0;
 }
 
 .search-bar input,
@@ -261,6 +264,13 @@ body {
     color: #a0a0a0;
 }
 
+/* Homepage: sits above the header, same width as the card grid below it. */
+.live {
+    width: min(600px, 90vw);
+    margin-bottom: 2rem;
+}
+
+/* Standalone /live.html */
 .live-stage {
     display: flex;
     flex-direction: column;
@@ -317,6 +327,53 @@ body {
     height: 8px;
     border-radius: 50%;
     background: #3a3a3a;
+}
+
+.live-badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: rgba(13, 13, 13, 0.75);
+    color: #e8e8e8;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    pointer-events: none;
+}
+
+.live-badge[hidden] {
+    display: none;
+}
+
+.live-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #e5484d;
+    animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.35;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .live-badge::before {
+        animation: none;
+    }
 }
 
 .live-back {
