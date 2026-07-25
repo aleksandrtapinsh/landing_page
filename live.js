@@ -23,15 +23,20 @@
 
     if (nativeHls) {
       video.src = PLAYLIST;
+      // Safari needs the metadata before it has anything to play.
+      video.addEventListener('loadedmetadata', start, { once: true });
     } else if (window.Hls && Hls.isSupported()) {
       hls = new Hls({ lowLatencyMode: true, backBufferLength: 30 });
-      hls.loadSource(PLAYLIST);
-      hls.attachMedia(video);
+      // Listeners go on before loadSource/attachMedia, otherwise the events
+      // they're waiting for can fire first and be missed.
+      hls.on(Hls.Events.MANIFEST_PARSED, start);
       hls.on(Hls.Events.ERROR, (_, data) => {
         // A fatal error usually means the publisher dropped; fall back to the
         // offline state and let polling bring us back.
         if (data.fatal) detach();
       });
+      hls.loadSource(PLAYLIST);
+      hls.attachMedia(video);
     } else {
       return;
     }
@@ -39,6 +44,12 @@
     attached = true;
     offline.hidden = true;
     if (badge) badge.hidden = false;
+  }
+
+  // Playback can only begin once there is actually something buffered. Calling
+  // play() any earlier rejects, which used to leave the player sitting on a
+  // blank frame until the page was reloaded.
+  function start() {
     video.play().catch(() => { /* autoplay blocked; the controls are there */ });
   }
 
