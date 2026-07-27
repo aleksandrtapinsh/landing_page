@@ -376,9 +376,9 @@ async function handle(req, res) {
       headers['Cache-Control'] = 'no-cache';
     } else if (ext === '.ts' || ext === '.m4s') {
       // Segment names are unique per broadcast, so these are safe to cache —
-      // but each one is deleted from disk after ~18s and never requested again.
-      // A long lifetime would just pile gigabytes of dead video into the
-      // viewer's browser cache; a minute is plenty to cover a rebuffer.
+      // but each one is deleted from disk within ~15-30s and never requested
+      // again. A long lifetime would just pile gigabytes of dead video into
+      // the viewer's browser cache; a minute is plenty to cover a rebuffer.
       headers['Cache-Control'] = 'public, max-age=60';
     }
     res.writeHead(200, headers);

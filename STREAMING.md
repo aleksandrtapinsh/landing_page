@@ -63,9 +63,12 @@ Settings → Output:
   sends by default. Both video and audio are passed through without re-encoding
   (audio must be AAC, the only codec OBS produces), so packaging costs almost no
   server CPU — but it also means AV1/HEVC will not package correctly.
-- **Keyframe Interval**: `2` seconds. This one matters — HLS can only cut a
-  segment on a keyframe, so leaving it on `0` (auto) gives ragged segment
-  lengths and jumpy playback.
+- **Keyframe Interval**: `1` second. This one matters twice over — HLS can
+  only cut a segment on a keyframe, so leaving it on `0` (auto) gives ragged
+  segment lengths and jumpy playback, and the interval *is* the segment
+  length, which is the main latency knob: 1s keyframes ≈ 3-4s behind live,
+  2s keyframes ≈ 5-6s. The cost of 1s is slightly worse compression at the
+  same bitrate; nudge the bitrate up a little if quality visibly drops.
 
 Then open <https://sasha-tapinsh.online/live.html>. The page polls
 `/api/live/status` every 5s and attaches the player when you go live, so you can
@@ -173,12 +176,17 @@ determined to; signing in is what makes a viewer count exactly once.
 
 ## Latency
 
-Expect roughly 6–10 seconds glass-to-glass: HLS buffers a few 2-second
-segments. That is the tradeoff for a format that plays everywhere with no
-special client. Shorter `-hls_time` in `stream-server.js` trims it a little at
-the cost of stability. If you ever want sub-second latency, the ingest server
-could expose node-media-server's HTTP-FLV output, and WebRTC would be the
-step up after that.
+Expect roughly 3–4 seconds glass-to-glass with a 1-second keyframe interval
+in OBS, 5–6 with 2 seconds. The player deliberately sits 3s behind the newest
+segment (`liveSyncDuration` in `live.js`) so one slow segment fetch doesn't
+stall playback; when a stall does push it further behind, it plays 5% fast
+until it has caught back up. Lowering `liveSyncDuration` trims latency
+further at the cost of rebuffering on shaky connections.
+
+That is the practical floor for plain HLS, the tradeoff for a format that
+plays everywhere with no special client. If you ever want sub-second latency,
+the ingest server could expose node-media-server's HTTP-FLV output, and
+WebRTC would be the step up after that.
 
 ## Checking it without OBS
 
@@ -186,8 +194,10 @@ Publish a test pattern:
 
 ```sh
 ffmpeg -re -f lavfi -i testsrc2=size=1280x720:rate=30 -f lavfi -i sine \
-  -c:v libx264 -preset ultrafast -tune zerolatency -g 60 -pix_fmt yuv420p \
+  -c:v libx264 -preset ultrafast -tune zerolatency -g 30 -pix_fmt yuv420p \
   -c:a aac -f flv "rtmp://127.0.0.1:1935/live/$(grep STREAM_KEY .env | cut -d= -f2)"
 ```
+
+(`-g 30` is a keyframe every second at 30 fps, matching the OBS setting.)
 
 Then `curl localhost:8080/api/live/status` should report `{"live":true,...}`.

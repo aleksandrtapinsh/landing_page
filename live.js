@@ -39,7 +39,19 @@
     if (nativeHls) {
       video.src = PLAYLIST;
     } else if (window.Hls && Hls.isSupported()) {
-      hls = new Hls({ lowLatencyMode: true, backBufferLength: 30 });
+      hls = new Hls({
+        lowLatencyMode: true,
+        backBufferLength: 30,
+        // Sit 3 seconds behind the newest segment. The default is three
+        // segment-durations (6s with 2s segments) and is most of the
+        // glass-to-glass delay; 3s is still enough to ride out one slow fetch.
+        liveSyncDuration: 3,
+        // Stalls push the play position further behind. Small drift is walked
+        // back by playing 5% fast — inaudible — and anything worse than 10s
+        // is fixed with one visible jump instead.
+        maxLiveSyncPlaybackRate: 1.05,
+        liveMaxLatencyDuration: 10,
+      });
       hls.on(Hls.Events.ERROR, (_, data) => {
         // A fatal error usually means the publisher dropped; fall back to the
         // offline state and let polling bring us back.

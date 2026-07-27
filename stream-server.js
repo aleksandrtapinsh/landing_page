@@ -103,7 +103,13 @@ function startPackaging(streamPath) {
     '-hide_banner',
     '-nostdin',
     '-loglevel', 'warning',
-    '-fflags', '+genpts',
+    // nobuffer: hand frames on as they arrive instead of collecting a probe
+    // buffer first; with the small probe limits below, the playlist appears a
+    // few seconds sooner after going live. Safe here because FLV declares the
+    // H.264/AAC parameters up front — there is nothing worth probing for.
+    '-fflags', '+genpts+nobuffer',
+    '-probesize', '1000000',
+    '-analyzeduration', '1000000',
     // Bail out if the ingest goes silent, so a half-open socket can't leave an
     // orphaned ffmpeg holding the output directory.
     '-rw_timeout', '5000000',
@@ -114,9 +120,14 @@ function startPackaging(streamPath) {
     '-c:v', 'copy',
     '-c:a', 'copy',
     '-f', 'hls',
-    '-hls_time', '2',
-    '-hls_list_size', '6',
-    '-hls_delete_threshold', '3',
+    // Cut a new segment at every keyframe: since HLS can only cut on
+    // keyframes, the real segment length — and with it the stream latency —
+    // is the OBS keyframe interval. 1s keyframes give 1s segments.
+    '-hls_time', '1',
+    // Sized in segments, so the time window halves if segments drop to 1s;
+    // 10 keeps roughly the old window either way.
+    '-hls_list_size', '10',
+    '-hls_delete_threshold', '4',
     '-hls_flags', 'delete_segments+independent_segments+temp_file',
     '-hls_segment_type', 'mpegts',
     '-hls_segment_filename', path.join(HLS_DIR, `${session}_%05d.ts`),
