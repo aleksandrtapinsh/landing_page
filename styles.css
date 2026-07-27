@@ -118,6 +118,10 @@ body {
 .search-btn {
     width: 3em;
     height: 3em;
+    /* Without this both halves keep the browser's default grey chrome, which
+       reads as a hard outline around the field and doubles up at the seam
+       between the two. The ring below is the only border they should have. */
+    border: none;
 }
 
 .search-bar input:invalid:not(:focus),
@@ -280,9 +284,25 @@ body {
     aspect-ratio: 16 / 9;
     border: 1px solid #bfe0f5;
     border-radius: 10px;
-    /* Stays dark: this is the letterbox behind the video. */
+    /* Stays dark: this is the letterbox behind the video. By default this fill
+       would also sit under the border, and a 1px curve antialiased over black
+       comes out as a ragged dark corner instead of a border. Clipping it to the
+       padding box keeps the corners crisp. */
     background: #0d0d0d;
+    background-clip: padding-box;
     overflow: hidden;
+    /* A <video> paints into its own compositing layer, which overflow:hidden
+       alone does not clip — its square black corners spill out over the rounded
+       border. Isolating the frame forces the clip to be honoured; the radius on
+       the children below covers browsers that still skip it. */
+    isolation: isolate;
+}
+
+.live-video,
+.live-offline {
+    /* The frame's 10px outer curve, less its 1px border: matching it exactly
+       means neither a square corner nor a sliver of page shows through. */
+    border-radius: 9px;
 }
 
 .live-video {

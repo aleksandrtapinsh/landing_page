@@ -281,6 +281,38 @@ async function handleMod(req, res, urlPath) {
   sendJson(res, { ok: true });
 }
 
+// Chat belongs to the broadcast: once nothing has been streaming for this
+// long, the log is wiped so the next stream starts on a clean slate. The clock
+// runs only while offline and restarts after each wipe, so a long silence
+// clears the chat every 12 hours rather than just once.
+const CHAT_CLEAR_AFTER_MS = 12 * 60 * 60 * 1000;
+const CHAT_SWEEP_MS = 5 * 60 * 1000;
+
+async function sweepChat() {
+  const now = new Date();
+
+  if (liveState().live) {
+    await db.meta().updateOne({ _id: 'chat' }, { $set: { clockAt: now } }, { upsert: true });
+    return;
+  }
+
+  const state = await db.meta().findOne({ _id: 'chat' });
+  // Stored in Mongo rather than in memory so a restart or deploy doesn't hand
+  // the chat another 12 hours. On a database that has never seen this, start
+  // the clock instead of wiping history the server knows nothing about.
+  if (!state?.clockAt) {
+    await db.meta().updateOne({ _id: 'chat' }, { $set: { clockAt: now } }, { upsert: true });
+    return;
+  }
+  if (now - state.clockAt < CHAT_CLEAR_AFTER_MS) return;
+
+  const removed = await realtime.clearChat();
+  await db.meta().updateOne({ _id: 'chat' }, { $set: { clockAt: now, clearedAt: now } });
+  if (removed > 0) {
+    console.log(`[chat] cleared ${removed} message${removed === 1 ? '' : 's'} after 12h offline`);
+  }
+}
+
 async function handle(req, res) {
   let url;
   let urlPath;
@@ -371,6 +403,10 @@ db.connect()
   .then(() => {
     console.log(`Connected to MongoDB (${db.dbName()})`);
     server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+    const sweep = () => sweepChat().catch((err) => console.error(`[chat] sweep failed: ${err.message}`));
+    sweep();
+    setInterval(sweep, CHAT_SWEEP_MS);
   })
   .catch((err) => {
     console.error(`Could not connect to MongoDB at ${db.uri()}: ${err.message}`);
