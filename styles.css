@@ -8,14 +8,15 @@
 html, body{
     max-width: 100%;
     overflow-x: hidden;
-    overflow-y: hidden;
 }
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    /* `safe` matters: plain centring pushes the overflow of a too-tall page off
+       the top edge, where it can't be scrolled back to. */
+    justify-content: safe center;
     background: #ffffff;
     color: #1f3347;
     font-family: 'Segoe UI', system-ui, sans-serif;
@@ -248,39 +249,43 @@ body {
     color: #5b7a94;
 }
 
-/* Player and chat side by side, above everything else. */
+/* The player block: a row of video + chat, with the settings below it. */
 .live {
     display: flex;
-    align-items: stretch;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
     width: min(1040px, 94vw);
     margin-bottom: 2rem;
 }
 
-.live-main {
+/* Video and chat are siblings here rather than the chat sitting beside the
+   whole column, so `stretch` sizes the chat to the player exactly — anything
+   below the row (the settings line, the back link) doesn't lengthen it. */
+.live-row {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    /* Without this a flex child refuses to shrink below its content width. */
-    flex: 1 1 auto;
-    min-width: 0;
+    align-items: stretch;
+    gap: 1rem;
+    width: 100%;
+    min-height: 0;
 }
 
 /* Stack once there isn't room for a readable column of chat beside the video. */
 @media (max-width: 860px) {
-    .live {
+    .live-row {
         flex-direction: column;
     }
 
     .chat {
-        flex-basis: auto;
+        flex: none;
         height: 300px;
     }
 }
 
 .live-frame {
     position: relative;
-    width: 100%;
+    /* Without min-width a flex child refuses to shrink below its content. */
+    flex: 1 1 auto;
+    min-width: 0;
     aspect-ratio: 16 / 9;
     border: 1px solid #bfe0f5;
     border-radius: 10px;
@@ -447,7 +452,10 @@ body {
 }
 
 .chat-log {
-    flex: 1 1 auto;
+    /* A zero basis, not `auto`: the backlog must contribute nothing to the
+       panel's own height, or a busy chat stretches the row and drags the
+       player taller with it instead of scrolling. */
+    flex: 1 1 0;
     min-height: 0;
     overflow-y: auto;
     padding: 0.6rem 0.75rem;
@@ -779,19 +787,21 @@ body.theater .live {
     width: 100vw;
     height: 100vh;
     padding: 0.75rem;
-    gap: 0.75rem;
     margin-bottom: 2rem;
 }
 
-body.theater .live-main {
-    height: 100%;
+/* The row takes whatever height the settings line leaves, and both the frame
+   and the chat stretch to it — so they stay exactly as tall as each other. */
+body.theater .live-row {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0.75rem;
 }
 
 body.theater .live-frame {
     /* Free the frame from 16:9 so it can use the full height; the video
        letterboxes itself inside. */
     aspect-ratio: auto;
-    flex: 1 1 auto;
     min-height: 0;
 }
 
@@ -801,6 +811,10 @@ body.theater .live-frame {
     body.theater .live {
         height: auto;
         min-height: 100vh;
+    }
+
+    body.theater .live-row {
+        flex: none;
     }
 
     body.theater .live-frame {

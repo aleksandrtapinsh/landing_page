@@ -15,11 +15,11 @@
   </header>
 
   <main class="live">
-    <div class="live-main">
+    <div class="live-row">
       <div class="live-frame">
         <video id="player" class="live-video" controls playsinline muted autoplay></video>
         <span id="badge" class="live-badge" hidden>LIVE<span id="viewers" class="live-viewers"></span></span>
-                <button id="theater" class="theater-btn" type="button" title="Theater mode (t)" aria-pressed="false">
+        <button id="theater" class="theater-btn" type="button" title="Theater mode (t)" aria-pressed="false">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="5" width="18" height="14" rx="2" />
             <rect x="7" y="9" width="10" height="6" fill="currentColor" stroke="none" />
@@ -31,28 +31,29 @@
           <small>Nothing is streaming right now.</small>
         </div>
       </div>
-      <label class="live-setting">
-        <input type="checkbox" id="theater-exit" checked>
-        Exit theater mode when the stream goes offline
-      </label>
-      <a class="live-back" href="/">&larr; back</a>
+
+      <aside class="chat">
+        <div class="chat-head">
+          <span>Chat</span>
+          <div class="chat-head-actions">
+            <button id="mod-open" class="account-btn" type="button" hidden>Mod</button>
+            <div id="account" class="account"></div>
+          </div>
+        </div>
+        <div id="chat-log" class="chat-log"></div>
+        <form id="chat-form" class="chat-form">
+          <input id="chat-input" type="text" maxlength="500" autocomplete="off" placeholder="Say something…">
+          <button type="submit">Send</button>
+        </form>
+        <p id="chat-notice" class="chat-notice"></p>
+      </aside>
     </div>
 
-    <aside class="chat">
-      <div class="chat-head">
-        <span>Chat</span>
-        <div class="chat-head-actions">
-          <button id="mod-open" class="account-btn" type="button" hidden>Mod</button>
-          <div id="account" class="account"></div>
-        </div>
-      </div>
-      <div id="chat-log" class="chat-log"></div>
-      <form id="chat-form" class="chat-form">
-        <input id="chat-input" type="text" maxlength="500" autocomplete="off" placeholder="Say something…">
-        <button type="submit">Send</button>
-      </form>
-      <p id="chat-notice" class="chat-notice"></p>
-    </aside>
+    <label class="live-setting">
+      <input type="checkbox" id="theater-exit" checked>
+      Exit theater mode when the stream goes offline
+    </label>
+    <a class="live-back" href="/">&larr; back</a>
   </main>
 
   <dialog id="account-dialog" class="account-dialog">
