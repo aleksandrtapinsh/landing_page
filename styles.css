@@ -322,18 +322,11 @@ body {
     background: #f7fbfe;
 }
 
-/* Same reason, one layer down: the element has no source while the placeholder
-   is up, but its own letterbox fill still tints the corners through it. */
+/* Same reason, one layer down: the element has nothing to show while the
+   placeholder is up, but its own letterbox fill still tints the corners
+   through it. Scoped to offline — unconditionally, this hides the stream. */
 .live-frame:has(.live-offline:not([hidden])) .live-video {
-    background: transparent;
-}
-
-.live-video {
-    /* The frame's 10px outer curve, less its 1px border: matching it exactly
-       means neither a square corner nor a sliver of page shows through. A
-       <video> needs this of its own — it composites in a layer that the
-       frame's overflow:hidden doesn't clip. */
-    border-radius: 9px;
+    opacity: 0;
 }
 
 .live-video {
@@ -341,12 +334,19 @@ body {
     height: 100%;
     display: block;
     background: #0d0d0d;
-    opacity:0;
+    /* The frame's 10px outer curve, less its 1px border: matching it exactly
+       means neither a square corner nor a sliver of page shows through. A
+       <video> needs this of its own — it composites in a layer that the
+       frame's overflow:hidden doesn't clip. */
+    border-radius: 9px;
 }
 
 .live-offline {
     position: absolute;
-    inset: -1;
+    /* Must stay `0`, not a bare `-1`: an unitless non-zero length is invalid,
+       so the whole declaration drops and the panel falls to its static
+       position past the bottom of the frame, where overflow:hidden eats it. */
+    inset: 0;
     z-index: 1;
     /* Deliberately square, clipped by the frame instead. Rounding it too would
        antialias its own curve against the dark letterbox behind it, ringing
