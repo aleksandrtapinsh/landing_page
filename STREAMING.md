@@ -155,10 +155,10 @@ watching the stream.
 ## Theater mode
 
 The button in the player's top-right corner (or the `t` key) expands the
-player and chat to fill the window; everything else moves below the fold. The
-checkbox under the player — "Exit theater mode when the stream goes offline",
-on by default — automatically leaves theater when the broadcast ends. Both
-preferences are remembered per browser.
+player and chat to fill the window; everything else moves below the fold. It
+works whether or not anything is streaming — it sits above the offline
+placeholder — and the choice is remembered per browser, so it survives a
+broadcast ending and is still on at the next visit.
 
 ## Viewer count
 

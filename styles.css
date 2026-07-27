@@ -8,6 +8,16 @@
 html, body{
     max-width: 100%;
     overflow-x: hidden;
+    /* The page still scrolls, its bar just isn't drawn. Not inherited, so the
+       chat log keeps its own scrollbar — that one is the only hint the backlog
+       goes further up. */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none;
 }
 body {
     min-height: 100vh;
@@ -296,6 +306,7 @@ body {
     background: #0d0d0d;
     background-clip: padding-box;
     overflow: hidden;
+    transition: background 0.2s;
     /* A <video> paints into its own compositing layer, which overflow:hidden
        alone does not clip — its square black corners spill out over the rounded
        border. Isolating the frame forces the clip to be honoured; the radius on
@@ -303,10 +314,25 @@ body {
     isolation: isolate;
 }
 
-.live-video,
-.live-offline {
+/* While the placeholder is up there's no video to letterbox, so drop the dark
+   fill. Leaving it there rings every corner in grey: the frame's rounded clip
+   antialiases the panel and the fill against the same edge pixels, so a
+   fraction of the black survives no matter how opaque the panel is. */
+.live-frame:has(.live-offline:not([hidden])) {
+    background: #f7fbfe;
+}
+
+/* Same reason, one layer down: the element has no source while the placeholder
+   is up, but its own letterbox fill still tints the corners through it. */
+.live-frame:has(.live-offline:not([hidden])) .live-video {
+    background: transparent;
+}
+
+.live-video {
     /* The frame's 10px outer curve, less its 1px border: matching it exactly
-       means neither a square corner nor a sliver of page shows through. */
+       means neither a square corner nor a sliver of page shows through. A
+       <video> needs this of its own — it composites in a layer that the
+       frame's overflow:hidden doesn't clip. */
     border-radius: 9px;
 }
 
@@ -320,6 +346,10 @@ body {
 .live-offline {
     position: absolute;
     inset: 0;
+    z-index: 1;
+    /* Deliberately square, clipped by the frame instead. Rounding it too would
+       antialias its own curve against the dark letterbox behind it, ringing
+       each corner in grey; covering the corners outright avoids that. */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -758,6 +788,9 @@ button.account-name:hover {
     position: absolute;
     top: 0.75rem;
     right: 0.75rem;
+    /* Above the offline placeholder, which is an opaque overlay across the
+       whole frame — without this the button is only usable while live. */
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -821,38 +854,6 @@ body.theater .live-frame {
         aspect-ratio: 16 / 9;
         flex: none;
     }
-}
-
-.scrollbar-hide {
-  overflow: auto; /* Ensures scrolling is still possible */
-
-  /* Hide scrollbar for Firefox */
-  scrollbar-width: none;
-
-  /* Hide scrollbar for Internet Explorer and Edge */
-  -ms-overflow-style: none;
-}
-
-/* Hide scrollbar for Chrome, Safari, and Opera */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* --- theater/offline setting --- */
-
-.live-setting {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.75rem;
-    color: #6b8aa5;
-    cursor: pointer;
-    -webkit-user-select: none;
-    user-select: none;
-}
-
-.live-setting input {
-    accent-color: #56aede;
 }
 
 /* --- moderation --- */
