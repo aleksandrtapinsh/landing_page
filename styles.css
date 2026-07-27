@@ -345,7 +345,7 @@ body {
 
 .live-offline {
     position: absolute;
-    inset: 0;
+    inset: -1;
     z-index: 1;
     /* Deliberately square, clipped by the frame instead. Rounding it too would
        antialias its own curve against the dark letterbox behind it, ringing
