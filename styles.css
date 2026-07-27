@@ -341,6 +341,7 @@ body {
     height: 100%;
     display: block;
     background: #0d0d0d;
+    opacity:0;
 }
 
 .live-offline {
