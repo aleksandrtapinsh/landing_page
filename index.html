@@ -75,7 +75,14 @@
   <dialog id="color-dialog" class="account-dialog">
     <form id="color-form">
       <h2>Name color</h2>
-      <div id="color-swatches" class="color-swatches"></div>
+      <label>
+        <span>Color</span>
+        <input id="color-wheel" type="color" class="color-wheel" value="#2570c7">
+      </label>
+      <div id="color-recent" class="color-recent" hidden>
+        <span>Recent</span>
+        <div id="color-swatches" class="color-swatches"></div>
+      </div>
       <label>
         <span>Hex code</span>
         <input id="color-hex" name="hex" type="text" maxlength="7" spellcheck="false" placeholder="#2570c7">

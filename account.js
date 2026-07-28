@@ -165,25 +165,63 @@
 
   const colorDialog = document.getElementById('color-dialog');
   const colorForm = document.getElementById('color-form');
+  const colorWheel = document.getElementById('color-wheel');
+  const colorRecent = document.getElementById('color-recent');
   const colorSwatches = document.getElementById('color-swatches');
   const colorHex = document.getElementById('color-hex');
   const colorPreview = document.getElementById('color-preview');
   const colorError = document.getElementById('color-error');
 
-  // Readable on the white chat background; the hex field takes anything.
-  const PALETTE = [
-    '#1f3347', '#b91c1c', '#c2410c', '#a16207', '#15803d', '#0f766e',
-    '#0369a1', '#2570c7', '#1d4ed8', '#6d28d9', '#a21caf', '#be185d',
-  ];
   const DEFAULT_COLOR = '#2570c7';
+  // Two rows of the swatch grid.
+  const RECENT_KEY = 'nameColorRecent';
+  const RECENT_MAX = 12;
 
   function normalizeHex(value) {
     const hex = String(value ?? '').trim().replace(/^([0-9a-fA-F]{6})$/, '#$1');
     return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex.toLowerCase() : null;
   }
 
+  // Anything could be in storage — another tab, an older build, a user poking
+  // at it — so the list is re-validated on the way out, not just on the way in.
+  function readRecent() {
+    try {
+      const list = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+      if (!Array.isArray(list)) return [];
+      return list.map(normalizeHex).filter(Boolean).slice(0, RECENT_MAX);
+    } catch {
+      return [];
+    }
+  }
+
+  function rememberColor(color) {
+    const list = [color, ...readRecent().filter((c) => c !== color)].slice(0, RECENT_MAX);
+    try {
+      localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+    } catch { /* private mode: the picker still works, it just won't remember */ }
+  }
+
+  function renderRecent() {
+    const list = readRecent();
+    colorSwatches.textContent = '';
+    colorRecent.hidden = list.length === 0;
+    for (const color of list) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'color-swatch';
+      btn.dataset.color = color;
+      btn.style.background = color;
+      btn.title = color;
+      btn.addEventListener('click', () => paintPicker(color));
+      colorSwatches.append(btn);
+    }
+  }
+
   function paintPicker(color) {
     colorHex.value = color;
+    // Assigning the same value the wheel already holds fires nothing, so this
+    // can't loop back through the wheel's own input handler.
+    colorWheel.value = color;
     colorPreview.textContent = user ? user.username : '';
     colorPreview.style.color = color;
     for (const btn of colorSwatches.children) {
@@ -194,21 +232,14 @@
   function openColorPicker() {
     if (!user || !colorDialog) return;
     colorError.textContent = '';
+    renderRecent();
     paintPicker(user.nameColor || DEFAULT_COLOR);
     colorDialog.showModal();
   }
 
   if (colorDialog) {
-    for (const color of PALETTE) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'color-swatch';
-      btn.dataset.color = color;
-      btn.style.background = color;
-      btn.title = color;
-      btn.addEventListener('click', () => paintPicker(color));
-      colorSwatches.append(btn);
-    }
+    // `input` rather than `change`: the preview tracks the wheel as it's dragged.
+    colorWheel.addEventListener('input', () => paintPicker(colorWheel.value));
 
     colorHex.addEventListener('input', () => {
       const hex = normalizeHex(colorHex.value);
@@ -224,6 +255,8 @@
       }
       try {
         const data = await api('/api/user/color', { color: hex });
+        rememberColor(hex);
+        renderRecent();
         announce(data.user);
         colorDialog.close();
       } catch (err) {

@@ -734,7 +734,8 @@ body {
     display: none;
 }
 
-.account-dialog label span {
+.account-dialog label span,
+.color-recent>span {
     display: block;
     margin-bottom: 0.25rem;
     font-size: 0.7rem;
@@ -828,11 +829,42 @@ button.account-name:hover {
     text-decoration: underline;
 }
 
+/* The wheel: a native colour input, stripped of its chrome so the swatch it
+   shows fills the same box the text fields use. */
+/* Typed selector to outweigh `.account-dialog input`, which sets the padding
+   the swatch needs to lose. */
+input.color-wheel {
+    height: 2.4rem;
+    padding: 0.25rem;
+    cursor: pointer;
+}
+
+.color-wheel::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-wheel::-webkit-color-swatch {
+    border: 0;
+    border-radius: 4px;
+}
+
+.color-wheel::-moz-color-swatch {
+    border: 0;
+    border-radius: 4px;
+}
+
+.color-recent {
+    margin-bottom: 0.75rem;
+}
+
+.color-recent[hidden] {
+    display: none;
+}
+
 .color-swatches {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 0.4rem;
-    margin-bottom: 0.75rem;
 }
 
 .color-swatch {
