@@ -102,9 +102,6 @@
         log.scrollTop = log.scrollHeight;
       } else if (payload.type === 'message') {
         addMessage(payload);
-      } else if (payload.type === 'cleared') {
-        log.textContent = '';
-        systemLine('Chat was cleared.');
       } else if (payload.type === 'error') {
         systemLine(payload.message);
       }
