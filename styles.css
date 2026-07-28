@@ -27,7 +27,6 @@ body::-webkit-scrollbar {
 
 body {
     min-height: 100vh;
-    padding-top: var(--user-bar-height);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -37,6 +36,29 @@ body {
     background: #ffffff;
     color: #1f3347;
     font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* The opening screen: the player, the title and the search bar have the first
+   viewport to themselves, so the grid and the links start one scroll down. */
+.hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* `safe` for the same reason the body uses it: on a viewport too short for
+       the player, the top has to stay reachable instead of centring off it. */
+    justify-content: safe center;
+    width: 100%;
+    min-height: calc(100dvh - var(--user-bar-height));
+}
+
+/* Keep that screen whole on short displays. The player's height follows its
+   width, so cap the width by whatever height is left once the header and the
+   margins have taken their share — the 316px the chat column and the row's gap
+   occupy doesn't scale with the video, so it comes off the top. */
+@media (min-width: 861px) {
+    .hero .live {
+        width: min(1040px, 94vw, calc(316px + (100dvh - var(--user-bar-height) - 9rem) * 16 / 9));
+    }
 }
 
 header {
@@ -117,12 +139,14 @@ body,
     display: flex;
 }
 
+/* The second body rule, and the later one, so the page's padding is settled
+   here: the top is the strip the fixed account bar occupies. */
 body {
     background: #ffffff;
     /* min-height, not height: the player makes the page taller than the
        viewport on short screens, and a fixed height would clip it. */
     min-height: 100vh;
-    padding: 2rem 0;
+    padding: var(--user-bar-height) 0 2rem;
 }
 
 .search-bar input,
