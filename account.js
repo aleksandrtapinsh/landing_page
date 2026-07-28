@@ -22,21 +22,65 @@
     render();
   }
 
+  // The dropdown that's currently open, if any. Only ever one.
+  let menu = null;
+
+  function closeMenu() {
+    if (!menu) return;
+    menu.hidden = true;
+    menu.previousElementSibling.setAttribute('aria-expanded', 'false');
+    menu = null;
+  }
+
+  function menuItem(label, action) {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'account-menu-item';
+    item.textContent = label;
+    item.addEventListener('click', () => {
+      closeMenu();
+      action();
+    });
+    return item;
+  }
+
   function render() {
+    // Whatever was open belongs to the markup about to be thrown away.
+    closeMenu();
     bar.textContent = '';
     if (user) {
+      const wrap = document.createElement('div');
+      wrap.className = 'account-menu-wrap';
+
       const name = document.createElement('button');
       name.type = 'button';
       name.className = 'account-name';
-      name.title = 'Change your name color';
+      name.title = 'Account options';
+      name.setAttribute('aria-haspopup', 'true');
+      name.setAttribute('aria-expanded', 'false');
       name.textContent = user.username;
       if (user.nameColor) name.style.color = user.nameColor;
-      name.addEventListener('click', openColorPicker);
-      const out = document.createElement('button');
-      out.className = 'account-btn';
-      out.textContent = 'Sign out';
-      out.addEventListener('click', signOut);
-      bar.append(name, out);
+
+      const list = document.createElement('div');
+      list.className = 'account-menu';
+      list.hidden = true;
+      list.append(
+        menuItem('Change color', openColorPicker),
+        menuItem('Sign out', signOut),
+      );
+
+      name.addEventListener('click', () => {
+        const wasOpen = menu === list;
+        closeMenu();
+        // A second click on the name closes the menu it just opened.
+        if (wasOpen) return;
+        list.hidden = false;
+        name.setAttribute('aria-expanded', 'true');
+        menu = list;
+      });
+
+      wrap.append(name, list);
+      bar.append(wrap);
       return;
     }
     for (const next of ['login', 'register']) {
@@ -47,6 +91,15 @@
       bar.append(btn);
     }
   }
+
+  // Dismissal, registered once rather than per render: anything outside the
+  // name and its dropdown closes it, as does Escape.
+  document.addEventListener('click', (event) => {
+    if (menu && !menu.parentElement.contains(event.target)) closeMenu();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeMenu();
+  });
 
   function setMode(next) {
     mode = next;

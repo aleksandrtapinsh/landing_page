@@ -625,6 +625,55 @@ body {
     letter-spacing: 0.02em;
 }
 
+/* The name is the menu button; the caret says so. */
+.account-name[aria-haspopup]::after {
+    content: " ▾";
+    color: #8fb3cf;
+}
+
+.account-menu-wrap {
+    position: relative;
+    display: flex;
+}
+
+/* Hangs off the name, right-aligned so it stays inside the viewport edge. */
+.account-menu {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 9rem;
+    padding: 0.25rem;
+    border: 1px solid #bfe0f5;
+    border-radius: 8px;
+    background: #f7fbfe;
+    box-shadow: 0 6px 16px rgba(31, 51, 71, 0.12);
+}
+
+.account-menu[hidden] {
+    display: none;
+}
+
+.account-menu-item {
+    padding: 0.4rem 0.5rem;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: #5b7a94;
+    font-family: inherit;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.account-menu-item:hover {
+    background: #e8f4fc;
+    color: #1f3347;
+}
+
 .account-btn {
     padding: 0.3rem 0.5rem;
     border: 1px solid #bfe0f5;
