@@ -626,6 +626,14 @@ body {
     color: #1f3347;
     padding: 1.25rem;
     width: min(340px, 92vw);
+    /* The `* { margin: 0 }` reset above kills the UA stylesheet's `margin: auto`
+       on dialog, which is what centres a modal inside its `inset: 0` box — put
+       it back, or the dialog pins itself to a corner of the viewport. */
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    max-height: calc(100dvh - 2rem);
+    overflow: auto;
 }
 
 .account-dialog::backdrop {
