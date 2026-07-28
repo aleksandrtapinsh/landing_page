@@ -53,11 +53,11 @@ body {
 
 /* Keep that screen whole on short displays. The player's height follows its
    width, so cap the width by whatever height is left once the header and the
-   margins have taken their share — the 316px the chat column and the row's gap
+   margins have taken their share — the 356px the chat column and the row's gap
    occupy doesn't scale with the video, so it comes off the top. */
 @media (min-width: 861px) {
     .hero .live {
-        width: min(1040px, 94vw, calc(316px + (100dvh - var(--user-bar-height) - 9rem) * 16 / 9));
+        width: min(1400px, 94vw, calc(356px + (100dvh - var(--user-bar-height) - 9rem) * 16 / 9));
     }
 }
 
@@ -295,7 +295,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    width: min(1040px, 94vw);
+    width: min(1400px, 94vw);
     margin-bottom: 2rem;
 }
 
@@ -492,7 +492,7 @@ body {
 .chat {
     display: flex;
     flex-direction: column;
-    flex: 0 0 300px;
+    flex: 0 0 340px;
     min-height: 0;
     border: 1px solid #bfe0f5;
     border-radius: 10px;
