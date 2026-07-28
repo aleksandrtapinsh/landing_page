@@ -19,8 +19,15 @@ html::-webkit-scrollbar,
 body::-webkit-scrollbar {
     display: none;
 }
+:root {
+    /* Height of the strip the fixed account bar sits in. Page content is padded
+       clear of it, so the bar never lands on the player or the chat head. */
+    --user-bar-height: 3rem;
+}
+
 body {
     min-height: 100vh;
+    padding-top: var(--user-bar-height);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -584,6 +591,28 @@ body {
 
 /* --- account --- */
 
+/* Who you are, pinned to the top right of the viewport rather than riding along
+   in the chat head. Fixed, so it stays put on the pages that scroll. */
+.user-bar {
+    position: fixed;
+    top: 0.5rem;
+    right: 0.75rem;
+    /* Over the player and the chat, under a modal's backdrop. */
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #bfe0f5;
+    border-radius: 8px;
+    background: #f7fbfe;
+    /* The typography the chat head used to lend it. */
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5b7a94;
+}
+
 .account {
     display: flex;
     align-items: center;
@@ -820,14 +849,12 @@ button.account-name:hover {
     color: #ffffff;
 }
 
-/* Player + chat fill the viewport; everything below is pushed past the fold. */
-body.theater {
-    padding-top: 0;
-}
-
+/* Player + chat fill the viewport below the account bar; everything else is
+   pushed past the fold. The height has to discount the bar's strip, or the
+   body's padding pushes the row past the bottom edge and the page scrolls. */
 body.theater .live {
     width: 100vw;
-    height: 100vh;
+    height: calc(100vh - var(--user-bar-height));
     padding: 0.75rem;
     margin-bottom: 2rem;
 }
@@ -852,7 +879,7 @@ body.theater .live-frame {
     /* Stacked layout: give the video its shape back and let the page scroll. */
     body.theater .live {
         height: auto;
-        min-height: 100vh;
+        min-height: calc(100vh - var(--user-bar-height));
     }
 
     body.theater .live-row {
@@ -866,12 +893,6 @@ body.theater .live-frame {
 }
 
 /* --- moderation --- */
-
-.chat-head-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
 
 .mod-dialog {
     width: min(440px, 94vw);
