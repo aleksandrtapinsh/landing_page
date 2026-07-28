@@ -118,13 +118,10 @@ panel's header. Anyone can read chat; posting requires being signed in.
   scrollback, and rate-limits posting (burst of 5, then one message per 2
   seconds). Message text is rendered with `textContent`, so HTML in messages is
   inert.
-- **The log is wiped once the stream has been offline for 12 hours**, so a new
-  broadcast starts on a clean slate. The clock only runs while nothing is
-  streaming and restarts after each wipe — a long silence clears the chat every
-  12 hours, and a chat during a broadcast is never cut out from under anyone.
-  Open tabs are told to clear too, and see "Chat was cleared." The countdown
-  lives in MongoDB (`meta`, `_id: "chat"`), so a restart or deploy doesn't hand
-  the chat another 12 hours. A 30-day expiry on messages remains as a backstop.
+- **Chat is ephemeral**: every message is deleted 12 hours after it was sent
+  (live or not — MongoDB's TTL sweep handles it), and the whole log is cleared
+  each time the app starts, so a restart or deploy always begins with an empty
+  chat.
 - Usernames are unique case-insensitively; 3–20 chars, letters/numbers/`_`/`-`.
 - Signed-in users can pick a name color (click your name in the chat header or
   on one of your own messages): a swatch palette plus a free hex field. The
