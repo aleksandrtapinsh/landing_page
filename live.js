@@ -148,7 +148,7 @@
 
     theaterBtn.addEventListener('click', toggleTheater);
     document.addEventListener('keydown', (event) => {
-      if (event.key !== 't' || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.defaultPrevented || event.key !== 't' || event.ctrlKey || event.metaKey || event.altKey) return;
       // Never steal the key from someone typing in chat or a form.
       if (/^(input|textarea|select)$/i.test(event.target.tagName)) return;
       toggleTheater();
